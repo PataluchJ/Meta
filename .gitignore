@@ -1,0 +1,7 @@
+*.opt.tour
+*.tsp
+*.atsp
+.vs
+__pycache__
+*.vcxproj*
+x64

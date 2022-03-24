@@ -3,12 +3,16 @@
 #include <string>
 #include <fstream>
 #include <iostream>
+#include <vector>
 class TSPFile
 {
 public:
 	TSPFile(const std::string& filepath);
 	~TSPFile();
 	
+	using TSPinteger = int;
+	using TSPreal = double;
+
 	//bool openAndParse(const std::string& filename);
 	bool isGood();
 
@@ -16,6 +20,10 @@ public:
 	std::string comment;
 	size_t dimension = 0;
 	size_t capacity = 0;
+	
+	std::vector<std::vector<TSPinteger>> matrix;
+	std::vector<TSPinteger> tour;
+
 	enum class Type {
 		TSP,
 		ATSP,
@@ -73,6 +81,25 @@ public:
 	} displayType = DisplayDataType::NoDisplay;
 
 private:
+
+	struct Pair {
+		size_t x;
+		size_t y;
+		Pair(size_t x, size_t y) : x(x), y(y){}
+	};
+	struct Coord {
+		TSPreal x;
+		TSPreal y;
+		TSPreal z;
+		Coord() : x(0.0), y(0.0), z(0.0) {}
+		Coord(TSPreal x, TSPreal y, TSPreal z) : x(x), y(y), z(z) {}
+	};
+
+	using IteratorForwardFunction = Pair(*)(const Pair, const size_t);
+	using DistanceFunction = TSPinteger(*)(const Coord, const Coord);
+	using VectorPointer = std::vector<Coord>;
+	using CoordVectorPointer = std::unique_ptr<VectorPointer>;
+
 	std::fstream file;
 
 	enum class ParseMode {
@@ -98,6 +125,9 @@ private:
 	void parseFixedEdgeSection();
 	void parseNodeCoordSection();
 	void parseTourSection();
+
+	CoordVectorPointer load2DPoints();
+	CoordVectorPointer load3DPoints();
 
 	Type stringToType(const std::string& name);
 	EdgeWeightType stringToWeightType(const std::string& name);

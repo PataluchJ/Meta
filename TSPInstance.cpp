@@ -12,7 +12,6 @@ TSPInstance::TSPInstance(size_t size)
 	this->adjacencyMatrix->resize(size);
 	for (auto& subVector : *(this->adjacencyMatrix))
 		subVector.resize(size, 0);
-
 }
 
 TSPInstance::~TSPInstance()
@@ -109,43 +108,44 @@ InstancePointer TSPInstance::generateEuclidInstance(size_t size, unsigned int se
 
 InstancePointer TSPInstance::loadFromFile(const std::string& filepath)
 {
-	std::fstream file;
-	file.open(filepath, std::ios::in);
-	
-	enum class Mode {
-		Keywords,
-		Data
-	} mode = Mode::Keywords;
-	enum class Type {
-		Unknow,
-		TSP,
-		ATSP,
-		TOUR,
-		Other
-	} type = Type::Unknow;
+	TSPFile file(filepath);
+	if (!file.isGood()) {
+		std::cerr << "Unable to load instance from file.\n";
+		return nullptr;
+	}
+	InstancePointer instance(new TSPInstance(file.dimension));
 
-	std::string line;
-	std::string key;
-	std::string value;
+	auto target = instance->adjacencyMatrix;
+	auto source = file.matrix;
 
-	while (std::getline(file, line)) {
-		if (mode == Mode::Keywords) {
-			auto colonPosition = line.find(':');
-			if (colonPosition != std::string::npos) {
-				key = line.substr(0, colonPosition);
-				value = line.substr(colonPosition+2, line.size() - colonPosition-2);
-			}
-			else {
-				key = line;
-			}
-			if (key.compare("TYPE") == 0) {
-
-			}
+	for (size_t i = 0; i < file.dimension; i++) {
+		for (size_t j = 0; j < file.dimension; j++) {
+			(*target)[i][j] = (uint32_t)(source[i][j]);
 		}
 	}
 
-	file.close();
-	return InstancePointer();
+	return instance;
+}
+
+bool TSPInstance::loadTourFromFile(const std::string& filepath)
+{
+	TSPFile file(filepath);
+	if (!file.isGood()) {
+		std::cerr << "Unable to load instance from file.\n";
+		return false;
+	}
+
+	optimalSolution->resize(file.dimension, 0);
+	if (file.tour.size() != file.dimension) {
+		std::cerr << "File does not contain tour section!";
+		return false;
+	}
+
+	for (size_t i = 0; i < file.dimension; i++) {
+		(*optimalSolution)[i] = file.tour[i];
+	}
+
+	return true;
 }
 
 uint64_t TSPInstance::calculateGenericSolutionDistance(SolutionPointer solution)

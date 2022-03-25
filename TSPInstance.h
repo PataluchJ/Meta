@@ -8,6 +8,8 @@
 #include <fstream>
 #include <iostream>
 
+#include "TSPFile.h"
+
 class TSPInstance;
 
 using DistanceMatrix = std::vector<std::vector<uint32_t>>;
@@ -28,18 +30,19 @@ public:
 
 	uint64_t calculateSolutionDistance();
 	uint64_t calculateOptimalSolutionDistance();
+	uint64_t calculateGenericSolutionDistance(SolutionPointer solution);
 
 	static InstancePointer generateAsymetricInstance(size_t size, unsigned int seed,  uint32_t minimumDistance = 0, uint32_t maximumDistance = 1000);
 	static InstancePointer generateSymtericInstaance(size_t size, unsigned int seed, uint32_t minimumDistance = 0, uint32_t maximumDistance = 1000);
 	static InstancePointer generateEuclidInstance(size_t size, unsigned int seed, uint32_t minimumDistance = 0, uint32_t maximumDistance = 1000);
 	static InstancePointer loadFromFile(const std::string& filepath);
 
+	bool loadTourFromFile(const std::string& filepath);
+
 private:
 	DistanceMatrixPointer adjacencyMatrix;
 	SolutionPointer solution;
 	SolutionPointer optimalSolution;
-
-	uint64_t calculateGenericSolutionDistance(SolutionPointer solution);
 };
 
 

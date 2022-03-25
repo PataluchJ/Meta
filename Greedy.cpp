@@ -4,18 +4,30 @@
 #include <algorithm>
 #include <random>
 
-Greedy::Greedy(uint32_t startingVerticle)
-    : startingVerticle(startingVerticle)
-{}
+Greedy::Greedy(){}
 
 void Greedy::solve(InstancePointer instance)
 {
-    auto size = instance->getDistanceMatrix()->size();
+    SolutionPointer solution = SolutionPointer(new Solution);
+    SolutionPointer bestSolution = instance->getSolution();;
+    uint64_t bestSolutionCost = UINT64_MAX;
+    auto matrix = instance->getDistanceMatrix();
+    for (uint32_t v = 0; v < matrix->size(); v++) {
+        solveFromStartingVerticle(instance, solution, v);
+        uint64_t cost = instance->calculateGenericSolutionDistance(solution);
+        if (cost < bestSolutionCost) {
+            std::copy(solution->begin(), solution->end(), bestSolution->begin());
+        }
+    }
+}
+void Greedy::solveFromStartingVerticle(InstancePointer instance, SolutionPointer solutionVector, uint32_t startingVerticle)
+{
     auto distanceMatrix = instance->getDistanceMatrix();
+    auto size = distanceMatrix->size();
+    
     std::vector<bool> visited;
     visited.resize(size, false);
 
-    auto solutionVector = instance->getSolution();
     solutionVector->clear();
     solutionVector->reserve(size);
     solutionVector->push_back(startingVerticle);
@@ -47,4 +59,5 @@ void Greedy::solve(InstancePointer instance)
         ++noVisited;
         currentVerticle = bestVert;
     }
-};
+}
+

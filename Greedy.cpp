@@ -4,33 +4,34 @@
 #include <algorithm>
 #include <random>
 
-Greedy::Greedy(u_int32_t starting_verticle)
-{
-    this->startingVerticle = starting_verticle;
-}
+Greedy::Greedy(uint32_t startingVerticle)
+    : startingVerticle(startingVerticle)
+{}
 
 void Greedy::solve(InstancePointer instance)
 {
-    size = instance->getDistanceMatrix()->size();
-    visited = new bool[size];
-    for (int i = 0; i < size; ++i)
-        visited[i] = false;
+    auto size = instance->getDistanceMatrix()->size();
+    auto distanceMatrix = instance->getDistanceMatrix();
+    std::vector<bool> visited;
+    visited.resize(size, false);
 
-    instance->getSolution()->push_back(startingVerticle);
+    auto solutionVector = instance->getSolution();
+    solutionVector->push_back(startingVerticle);
     visited[startingVerticle] = true;
-    noVisited = 1;
-    currentVerticle = startingVerticle;
+
+    uint32_t noVisited = 1;
+    uint32_t currentVerticle = startingVerticle;
 
     while (noVisited != size)
     {
-        bestVert = 0;
-        bestCost = UINT32_MAX;
+        uint32_t bestVert = 0;
+        uint64_t bestCost = UINT64_MAX;
 
         for (int j = 0; j < size; ++j)
         {
             if (!visited[j] && j != currentVerticle)
             {
-                cost = instance->getDistanceMatrix()->at(currentVerticle).at(j);
+                uint64_t cost = (*distanceMatrix)[currentVerticle][j];
                 if (cost < bestCost)
                 {
                     bestCost = cost;
@@ -39,11 +40,9 @@ void Greedy::solve(InstancePointer instance)
             }
         }
 
-        instance->getSolution()->push_back(bestVert);
+        solutionVector->push_back(bestVert);
         visited[bestVert] = true;
         ++noVisited;
         currentVerticle = bestVert;
     }
-
-    delete[] visited;
 };

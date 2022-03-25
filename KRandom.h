@@ -7,14 +7,10 @@
 class KRandom : public Solver
 {
 public:
-    KRandom(u_int32_t k);
-    void solve(InstancePointer instance);
-
+    KRandom(uint32_t k);
+    void solve(InstancePointer instance) override;
 private:
-    u_int32_t k;
-    uint32_t minSolutionValue;
-    uint32_t tempSolutionValue;
-    SolutionPointer tempSolution;
+    uint32_t k;
 };
 
 #endif

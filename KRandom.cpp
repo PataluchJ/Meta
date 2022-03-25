@@ -4,30 +4,32 @@
 #include <algorithm>
 #include <random>
 
-KRandom::KRandom(u_int32_t k)
-{
-    this->k = k;
-}
+KRandom::KRandom(uint32_t k) : k(k) {}
 
 void KRandom::solve(InstancePointer instance)
 {
-    tempSolution = SolutionPointer(new Solution);
+    auto matrix = instance->getDistanceMatrix();
+    auto tempSolution = SolutionPointer(new Solution);
+    auto bestSolution = SolutionPointer(new Solution);
+    tempSolution->resize(matrix->size());
+    bestSolution->resize(matrix->size());
+    for (uint32_t i = 0; i < matrix->size(); i++) {
+        (*bestSolution)[i] = i;
+        (*tempSolution)[i] = i;
+    }
 
-    for (int i = 0; i < instance->getDistanceMatrix()->size(); ++i)
-        tempSolution->push_back(i);
+    uint64_t bestCost = UINT64_MAX;
 
-    std::shuffle(tempSolution->begin(), tempSolution->end(), std::default_random_engine());
-    instance->getSolution()->assign(tempSolution->begin(), tempSolution->end());
-    minSolutionValue = instance->calculateSolutionDistance();
-
-    for (int i = 0; i < k - 1; ++i)
+    for (int i = 0; i < k; ++i)
     {
         std::shuffle(tempSolution->begin(), tempSolution->end(), std::default_random_engine());
-        tempSolutionValue = instance->calculateGenericSolutionDistance(tempSolution);
-        if (tempSolutionValue < minSolutionValue)
+        uint64_t cost = instance->calculateGenericSolutionDistance(tempSolution);
+        if (bestCost > cost)
         {
-            minSolutionValue = tempSolutionValue;
-            instance->getSolution()->assign(tempSolution->begin(), tempSolution->end());
+            bestCost = cost;
+            bestSolution->swap(*tempSolution);
         }
     }
+
+    instance->getSolution()->swap(*bestSolution);
 }

@@ -7,18 +7,10 @@
 class Greedy : public Solver
 {
 public:
-    Greedy(u_int32_t starting_verticle);
-    void solve(InstancePointer instance);
-
+    Greedy(uint32_t startingVerticle);
+    void solve(InstancePointer instance) override;
 private:
-    bool *visited;
-    u_int32_t startingVerticle;
-    u_int32_t currentVerticle;
-    u_int32_t noVisited;
-    u_int32_t size;
-    u_int32_t bestVert;
-    u_int32_t bestCost;
-    u_int32_t cost;
+    uint32_t startingVerticle;
 };
 
 #endif

@@ -148,12 +148,12 @@ bool TSPInstance::loadTourFromFile(const std::string& filepath)
 	return true;
 }
 
-uint64_t TSPInstance::calculateGenericSolutionDistance(SolutionPointer solution)
+uint64_t TSPInstance::calculateGenericSolutionDistance(SolutionPointer sol)
 {
 	uint64_t distance = 0;
-	for (size_t i = 0; i < solution->size()-1; i++) {
-		distance += (*adjacencyMatrix)[(*solution)[i]][(*solution)[i+1]];
+	for (size_t i = 0; i < sol->size()-1; i++) {
+		distance += (*adjacencyMatrix)[(*sol)[i]][(*sol)[i+1]];
 	}
-	distance += (*adjacencyMatrix)[(*solution)[solution->size()-1]][(*solution)[0]];
+	distance += (*adjacencyMatrix)[(*sol)[sol->size()-1]][(*sol)[0]];
 	return distance;
 }

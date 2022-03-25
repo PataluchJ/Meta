@@ -22,6 +22,8 @@ void TSPFile::parseFile()
 {
 	std::string line;
 	while (std::getline(file, line) && parseMode != ParseMode::Eof) {
+		if (line.length() == 0)
+			continue;
 		parseSpecificationLine(line);
 		switch (parseMode) {
 			case ParseMode::DemandSection: {
@@ -374,7 +376,7 @@ void TSPFile::parseTourSection() {
 	TSPinteger readed;
 	do {
 		file >> readed;
-		tour.push_back(readed);
+		tour.push_back(readed-1);
 	} while (readed != -1);
 	tour.pop_back(); // Pop -1
 }
@@ -543,7 +545,7 @@ TSPFile::EdgeWeightFormat TSPFile::stringToWeightFormat(const std::string& name)
 		return EdgeWeightFormat::LowerRow;
 	if (name.compare("UPPER_DIAG_ROW") == 0)
 		return EdgeWeightFormat::UpperDiagRow;
-	if (name.compare("LOWER_DIAG_ROW ") == 0)
+	if (name.compare("LOWER_DIAG_ROW") == 0)
 		return EdgeWeightFormat::LowerDiagRow;
 	if (name.compare("UPPER_COL") == 0)
 		return EdgeWeightFormat::UpperCol;

@@ -2,6 +2,7 @@
 
 TSPFile::TSPFile(const std::string& filepath)
 {
+	success = false;
 	this->file.open(filepath, std::ios::in);
 	if(file.good())
 		parseFile();
@@ -14,7 +15,7 @@ TSPFile::~TSPFile()
 
 bool TSPFile::isGood()
 {
-	return this->file.good();
+	return success;
 }
 
 void TSPFile::parseFile()
@@ -50,6 +51,7 @@ void TSPFile::parseFile()
 		}
 		parseMode = ParseMode::Specification;
 	}
+	success = true;
 }
 
 void TSPFile::parseDemandSection(){
@@ -75,7 +77,10 @@ void TSPFile::parseDepotSection() {
 	} while (readed != -1);
 }
 void TSPFile::parseDisplayDataSection() {
-	std::cerr << "DISPLAY_DATA_SECTION not supported.\n";
+	std::cerr << "DISPLAY_DATA_SECTION not supported. Skipping\n";
+	std::string line;
+	for (size_t i = 0; i < dimension; i++)
+		std::getline(file, line);
 }
 void TSPFile::parseEdgeDataSection() {
 	/* Format:
@@ -374,6 +379,16 @@ void TSPFile::parseTourSection() {
 	tour.pop_back(); // Pop -1
 }
 
+std::string TSPFile::sanitizeString(const std::string&& string)
+{
+	std::string ret;
+	for (size_t i = 0; i < string.length(); i++) {
+		if (string[i] != ' ' && string[i] != '\t' && string[i] != '\n')
+			ret.push_back(string[i]);
+	}
+	return ret;
+}
+
 TSPFile::CoordVectorPointer TSPFile::load2DPoints()
 {
 	CoordVectorPointer coords = CoordVectorPointer(new VectorPointer);
@@ -381,7 +396,7 @@ TSPFile::CoordVectorPointer TSPFile::load2DPoints()
 	TSPinteger v;
 	for (size_t i = 0; i < dimension; i++) {
 		file >> v;
-		file >> (*coords)[v].x >> (*coords)[v].y;
+		file >> (*coords)[v-1].x >> (*coords)[v-1].y;
 	}
 	return coords;
 }
@@ -402,8 +417,8 @@ void TSPFile::parseSpecificationLine(std::string& line)
 	auto colonPosition = line.find(':');
 	if (colonPosition != std::string::npos) {
 		/* key: value */
-		std::string key = line.substr(0, colonPosition);
-		std::string value = line.substr(colonPosition + 2, line.size() - colonPosition - 2);
+		std::string key = sanitizeString(line.substr(0, colonPosition));
+		std::string value = sanitizeString(line.substr(colonPosition + 1, line.size() - colonPosition - 1));
 		if (key.compare("NAME") == 0)
 			this->name = value;
 		else if (key.compare("COMMENT") == 0)
@@ -431,6 +446,7 @@ void TSPFile::parseSpecificationLine(std::string& line)
 	}
 	else {
 		/* section */
+		line = sanitizeString(std::move(line));
 		if (line.compare("NODE_COORD_SECTION") == 0) {
 			this->parseMode = ParseMode::NodeCoord;
 		}

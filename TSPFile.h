@@ -101,6 +101,7 @@ private:
 	using CoordVectorPointer = std::unique_ptr<VectorPointer>;
 
 	std::fstream file;
+	bool success;
 
 	enum class ParseMode {
 		Specification,
@@ -125,6 +126,8 @@ private:
 	void parseFixedEdgeSection();
 	void parseNodeCoordSection();
 	void parseTourSection();
+
+	std::string sanitizeString(const std::string&& string);
 
 	CoordVectorPointer load2DPoints();
 	CoordVectorPointer load3DPoints();

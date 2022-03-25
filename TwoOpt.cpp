@@ -8,7 +8,7 @@ void TwoOpt::solve(InstancePointer instance)
 	/* Get starting solution from greedy */
 	Greedy g;
 	g.solve(instance);
-
+	
 	//SolutionPointer bestSolution = SolutionPointer(new Solution);
 	SolutionPointer bestSolution = instance->getSolution();
 	SolutionPointer bestNeightboor = SolutionPointer(new Solution);
@@ -28,17 +28,19 @@ void TwoOpt::solve(InstancePointer instance)
 		std::copy(bestSolution->begin(), bestSolution->end(), neightboor->begin());
 		std::copy(bestSolution->begin(), bestSolution->end(), bestNeightboor->begin());
 
-		/* Generate and check all permutations */
-		for (uint32_t v = 0; v < size; v++) {
-			for (uint32_t u = v+1; u < size; u++) {
-				std::swap((*neightboor)[v], (*neightboor)[u]);
+		/* Generate and check all neightboors */
+		for (auto left = neightboor->begin(); left != neightboor->end(); left++) {
+			for (auto right = left + 1; right != neightboor->end(); right++) {
+				//std::swap((*neightboor)[v], (*neightboor)[u]);
+				std::reverse(left, right);
 				auto currentCost = instance->calculateGenericSolutionDistance(neightboor);
 				if (currentCost < bestNeightboorCost) {
 					bestNeightboorCost = currentCost;
 					std::copy(neightboor->begin(), neightboor->end(), bestNeightboor->begin());
 				}
 				/* Reswap */
-				std::swap((*neightboor)[v], (*neightboor)[u]);
+				//std::swap((*neightboor)[v], (*neightboor)[u]);
+				std::reverse(left, right);
 			}
 		}
 		/* Check if best neightboor is better than current solution */

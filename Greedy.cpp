@@ -16,6 +16,8 @@ void Greedy::solve(InstancePointer instance)
     visited.resize(size, false);
 
     auto solutionVector = instance->getSolution();
+    solutionVector->clear();
+    solutionVector->reserve(size);
     solutionVector->push_back(startingVerticle);
     visited[startingVerticle] = true;
 

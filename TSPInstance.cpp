@@ -46,15 +46,15 @@ uint64_t TSPInstance::calculateOptimalSolutionDistance()
 InstancePointer TSPInstance::generateAsymetricInstance(size_t size, unsigned int seed, uint32_t minimumDistance, uint32_t maximumDistance)
 {
 	InstancePointer instance = InstancePointer(new TSPInstance(size));
-	auto matrix = *(instance->getDistanceMatrix());
+	auto matrix = instance->getDistanceMatrix();
 	auto modulo = maximumDistance - minimumDistance;
 	srand(seed);
 	for (size_t v = 0; v < size; v++) 
 		for (size_t u = 0; u < size; u++) 
-			matrix[v][u] = rand() % modulo + minimumDistance;
+			(*matrix)[v][u] = rand() % modulo + minimumDistance;
 
 	for (size_t v = 0; v < size; v++)
-		matrix[v][v] = 0;
+		(*matrix)[v][v] = 0;
 
 	return instance;
 }
@@ -62,14 +62,14 @@ InstancePointer TSPInstance::generateAsymetricInstance(size_t size, unsigned int
 InstancePointer TSPInstance::generateSymtericInstaance(size_t size, unsigned int seed, uint32_t minimumDistance, uint32_t maximumDistance)
 {
 	InstancePointer instance = InstancePointer(new TSPInstance(size));
-	auto matrix = *(instance->getDistanceMatrix());
+	auto matrix = instance->getDistanceMatrix();
 	auto modulo = maximumDistance - minimumDistance;
 	srand(seed);
 	for (size_t v = 0; v < size; v++) {
 		for (size_t u = v + 1; u < size; u++) {
 			uint32_t distance = rand() % modulo + minimumDistance;
-			matrix[v][u] = distance;
-			matrix[u][v] = distance;
+			(*matrix)[v][u] = distance;
+			(*matrix)[u][v] = distance;
 		}
 	}
 
@@ -92,14 +92,14 @@ InstancePointer TSPInstance::generateEuclidInstance(size_t size, unsigned int se
 	
 	/* Create distance matrix */
 	InstancePointer instance = InstancePointer(new TSPInstance(size));
-	auto matrix = *(instance->getDistanceMatrix());
+	auto matrix = instance->getDistanceMatrix();
 	for (size_t v = 0; v < size; v++) {
 		for (size_t u = v+1; u < size; u++) {
 			uint32_t distance = (uint32_t)(sqrt((xCoord[v] - xCoord[u]) * (xCoord[v] - xCoord[u]) +
 				(yCoord[v] - yCoord[u]) * (yCoord[v] - yCoord[u])) + 0.5);
 			
-			matrix[v][u] = distance;
-			matrix[u][v] = distance;
+			(*matrix)[v][u] = distance;
+			(*matrix)[u][v] = distance;
 		}
 	}
 	
@@ -115,12 +115,9 @@ InstancePointer TSPInstance::loadFromFile(const std::string& filepath)
 	}
 	InstancePointer instance(new TSPInstance(file.dimension));
 
-	auto target = instance->adjacencyMatrix;
-	auto source = file.matrix;
-
 	for (size_t i = 0; i < file.dimension; i++) {
 		for (size_t j = 0; j < file.dimension; j++) {
-			(*target)[i][j] = (uint32_t)(source[i][j]);
+			(*instance->adjacencyMatrix)[i][j] = (uint32_t)(file.matrix[i][j]);
 		}
 	}
 

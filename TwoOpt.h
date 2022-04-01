@@ -12,6 +12,7 @@ public:
 	~TwoOpt() {}
 
 	void solve(InstancePointer instance) override;
+	std::string getName() override { return "2Opt"; }
 };
 #endif
 

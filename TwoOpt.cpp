@@ -2,6 +2,7 @@
 
 void TwoOpt::solve(InstancePointer instance)
 {
+	complexity = 0;
 	auto matrix = instance->getDistanceMatrix();
 	auto size = matrix->size();
 	
@@ -31,6 +32,7 @@ void TwoOpt::solve(InstancePointer instance)
 		/* Generate and check all neightboors */
 		for (auto left = neightboor->begin(); left != neightboor->end(); left++) {
 			for (auto right = left + 1; right != neightboor->end(); right++) {
+				//complexity++;
 				//std::swap((*neightboor)[v], (*neightboor)[u]);
 				std::reverse(left, right);
 				auto currentCost = instance->calculateGenericSolutionDistance(neightboor);

@@ -45,6 +45,10 @@ uint64_t TSPInstance::calculateOptimalSolutionDistance()
 
 InstancePointer TSPInstance::generateAsymetricInstance(size_t size, unsigned int seed, uint32_t minimumDistance, uint32_t maximumDistance)
 {
+	if (minimumDistance > maximumDistance) {
+		std::cerr << "Minimal distance must be smaller than maximum.\n";
+		return nullptr;
+	}
 	InstancePointer instance = InstancePointer(new TSPInstance(size));
 	auto matrix = instance->getDistanceMatrix();
 	auto modulo = maximumDistance - minimumDistance;
@@ -61,6 +65,10 @@ InstancePointer TSPInstance::generateAsymetricInstance(size_t size, unsigned int
 
 InstancePointer TSPInstance::generateSymtericInstaance(size_t size, unsigned int seed, uint32_t minimumDistance, uint32_t maximumDistance)
 {
+	if (minimumDistance > maximumDistance) {
+		std::cerr << "Minimal distance must be smaller than maximum.\n";
+		return nullptr;
+	}
 	InstancePointer instance = InstancePointer(new TSPInstance(size));
 	auto matrix = instance->getDistanceMatrix();
 	auto modulo = maximumDistance - minimumDistance;
@@ -76,7 +84,7 @@ InstancePointer TSPInstance::generateSymtericInstaance(size_t size, unsigned int
 	return instance;
 }
 
-InstancePointer TSPInstance::generateEuclidInstance(size_t size, unsigned int seed, uint32_t minimumDistance, uint32_t maximumDistance )
+InstancePointer TSPInstance::generateEuclidInstance(size_t size, unsigned int seed, uint32_t distance )
 {
 	std::vector<float> xCoord;
 	std::vector<float> yCoord;
@@ -84,10 +92,10 @@ InstancePointer TSPInstance::generateEuclidInstance(size_t size, unsigned int se
 	yCoord.resize(size, 0);
 	
 	/* Generate points */
-	double divider = static_cast<double>(RAND_MAX / (maximumDistance - minimumDistance));
+	double divider = static_cast<double>(RAND_MAX / (distance));
 	for (size_t i = 0; i < size; i++) {
-		xCoord[i] = minimumDistance + static_cast<double>(rand() / divider);
-		yCoord[i] = minimumDistance + static_cast<double>(rand() / divider);
+		xCoord[i] = static_cast<double>(rand() / divider);
+		yCoord[i] = static_cast<double>(rand() / divider);
 	}
 	
 	/* Create distance matrix */

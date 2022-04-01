@@ -34,7 +34,7 @@ public:
 
 	static InstancePointer generateAsymetricInstance(size_t size, unsigned int seed,  uint32_t minimumDistance = 0, uint32_t maximumDistance = 1000);
 	static InstancePointer generateSymtericInstaance(size_t size, unsigned int seed, uint32_t minimumDistance = 0, uint32_t maximumDistance = 1000);
-	static InstancePointer generateEuclidInstance(size_t size, unsigned int seed, uint32_t minimumDistance = 0, uint32_t maximumDistance = 1000);
+	static InstancePointer generateEuclidInstance(size_t size, unsigned int seed, uint32_t distance = 100);
 	static InstancePointer loadFromFile(const std::string& filepath);
 
 	bool loadTourFromFile(const std::string& filepath);

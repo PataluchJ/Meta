@@ -3,15 +3,15 @@
 #include "KRandom.h"
 #include "TwoOpt.h"
 
-int main(int argc, char** argv) {
+void driver(int argc, char** argv) {
 	/* args: algorithm={greedy|krandom|2opt} file [tour file]*/
 	if (argc < 2) {
 		std::cerr << "Missing argumens.";
-		return -1;
+		return;
 	}
 	Solver* s;
 	std::string alg = argv[1];
-	if (alg.compare("greedy")==0) {
+	if (alg.compare("greedy") == 0) {
 		s = new Greedy();
 	}
 	else if (alg.compare("krandom") == 0) {
@@ -22,7 +22,7 @@ int main(int argc, char** argv) {
 	}
 	else {
 		std::cerr << "No valid algorithm provided.\n";
-		return -1;
+		return;
 	}
 
 	bool referenceProvided = false;
@@ -31,7 +31,7 @@ int main(int argc, char** argv) {
 		instance->loadTourFromFile(argv[3]);
 		referenceProvided = true;
 	}
-		
+
 	s->solve(instance);
 	auto solutionDistance = instance->calculateSolutionDistance();
 	auto solution = instance->getSolution();
@@ -45,6 +45,10 @@ int main(int argc, char** argv) {
 		std::cout << "\nOptimal distance: " << reference << "\n";
 		std::cout << "PRD: " << ((double)solutionDistance - (double)reference) / (double)reference;
 	}
+}
+
+int main(int argc, char** argv) {
+	driver(argc, argv);
 
 	/*
 	std::vector<std::string> tspProblems{ "a280", "att48", "bayg29", "bays29", "berlin52",

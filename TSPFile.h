@@ -1,9 +1,13 @@
 #ifndef META_TSP_LOADER_H_
 #define META_TSP_LOADER_H_
+
 #include <string>
 #include <fstream>
 #include <iostream>
 #include <vector>
+#include <memory>
+#include <math.h>
+
 class TSPFile
 {
 public:

@@ -6,8 +6,10 @@
 #include <cstddef>
 #include <exception>
 #include <algorithm>
+#include <memory>
 
 using Solution = std::vector<uint32_t>;
+using SolutionPointer = std::shared_ptr<Solution>;
 /*
 Iteratory:
 	begin:	left = 0,		right = 1

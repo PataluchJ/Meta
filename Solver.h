@@ -11,4 +11,6 @@ public:
 protected:
 };
 
+using SolverPointer = std::shared_ptr<Solver>;
+
 #endif

@@ -11,7 +11,7 @@
 using Solution = std::vector<uint32_t>;
 using SolutionPointer = std::shared_ptr<Solution>;
 /*
-Iteratory:
+Iterators:
 	begin:	left = 0,		right = 1
 	end:	left = size-1;	right = size
 	front_end:	left = 0		right = 0
@@ -21,7 +21,14 @@ Iteratory:
 */
 class Neighborhood {
 public:
-	Neighborhood(Solution& starting);
+
+	enum class NeighborhoodFunction {
+		Reverse,
+		Swap,
+		Insert
+	};
+
+	Neighborhood(Solution& starting, NeighborhoodFunction fun = NeighborhoodFunction::Reverse);
 	~Neighborhood();
 
 	struct Iterator {
@@ -45,10 +52,19 @@ public:
 		friend bool operator<=(const Iterator& a, const Iterator& b);
 		friend bool operator>=(const Iterator& a, const Iterator& b);
 
-		Iterator(Solution startingSolution, uint64_t left, uint64_t right);
+		struct Move {
+			uint32_t l, r;
+			Move() : l(0), r(0) {}
+			Move(uint32_t l, uint32_t r) : l(l), r(r) {}
+			friend bool operator==(const Move& a, const Move& b);
+		};
+
+		Iterator(Solution startingSolution, uint32_t left, uint32_t right);
+		Move getCurrentMove() { return Move(left, right); }
+
 
 	private:
-		uint64_t left, right;
+		uint32_t left, right;
 		uint64_t dist;
 		Solution startingSolution;
 		Solution currentSolution;

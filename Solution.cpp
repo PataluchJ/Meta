@@ -19,6 +19,11 @@ bool operator>=(const Neighborhood::Iterator& a, const Neighborhood::Iterator& b
 	return a.dist >= b.dist;
 }
 
+bool operator==(const Neighborhood::Iterator::Move& a, const Neighborhood::Iterator::Move& b)
+{
+	return a.l == b.l && a.r == b.r;
+}
+
 Neighborhood::Iterator::reference Neighborhood::Iterator::operator*()
 {
 	if (!currentCached)
@@ -81,7 +86,7 @@ Neighborhood::Iterator Neighborhood::Iterator::operator--(int)
 	return temp;
 }
 
-Neighborhood::Iterator::Iterator(Solution startingSolution, uint64_t left, uint64_t right)
+Neighborhood::Iterator::Iterator(Solution startingSolution, uint32_t left, uint32_t right)
 	: startingSolution(startingSolution), left(left), right(right), dist(0), currentCached(false)
 {
 	// Calculate distance
@@ -101,7 +106,8 @@ Neighborhood::Iterator::Iterator(Solution startingSolution, uint64_t left, uint6
 
 void Neighborhood::Iterator::regenerate()
 {
-	std::copy(startingSolution.begin(), startingSolution.end(), currentSolution.begin());
+//	std::copy(startingSolution.begin(), startingSolution.end(), currentSolution.begin());
+	currentSolution.assign(startingSolution.begin(), startingSolution.end());
 	//currentSolution.assign(startingSolution.begin(), startingSolution.end());
 
 	auto leftIterator = currentSolution.begin();
@@ -143,7 +149,7 @@ void Neighborhood::Iterator::advance(int64_t distance)
 	}
 }
 
-Neighborhood::Neighborhood(Solution& starting)
+Neighborhood::Neighborhood(Solution& starting, NeighborhoodFunction fun)
 	: startingSolution(starting)
 {
 }

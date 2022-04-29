@@ -7,6 +7,9 @@
 #include <tuple>
 #include <chrono>
 #include <list>
+#include <random>
+#include <thread>
+#include <future>
 
 class TabuSearch : public Solver
 {
@@ -18,45 +21,33 @@ public:
 	using Iteratrions = NamedType<uint64_t, IterationsParam>;
 	using NoImprovment = NamedType<uint64_t, NoImprovmentParam>;
 
-	explicit TabuSearch(SolverPointer initialSolver, Time ms, uint64_t tabuLenght);
-	explicit TabuSearch(SolverPointer initialSolver, Iteratrions iters, uint64_t tabuLenght);
-	explicit TabuSearch(SolverPointer initialSolver, NoImprovment iters, uint64_t tabuLenght);
+	explicit TabuSearch(SolverPointer initialSolver, Time ms, uint64_t tabuLenght = 7, uint64_t stagnationThreshold = 200, uint64_t neighborhoodOffset = 0);
+	explicit TabuSearch(SolverPointer initialSolver, Iteratrions iters, uint64_t tabuLenght = 7, uint64_t stagnationThreshold = 200, uint64_t neighborhoodOffset = 0);
+	explicit TabuSearch(SolverPointer initialSolver, NoImprovment iters, uint64_t tabuLenght = 7, uint64_t stagnationThreshold = 200, uint64_t neighborhoodOffset = 0);
 	Solution solve(InstancePointer instance) override;
 	std::string getName() override { return "TabuSearch"; };
 
 private:
-	struct RunStatistic {
-		std::chrono::steady_clock::time_point start;
-		uint64_t iteration;
-		uint64_t stagnation;
-	};
+	/* Structs forward declaration */
+	struct RunStatistic;
+	struct TabuList;
+	struct HistoryRecord;
 
+	/* Types */
 	using Move = Neighborhood::Iterator::Move;
 	using BNReturn = std::tuple<Solution, Move, uint64_t>;
 	using ConditionFunction = std::function<bool(RunStatistic&)>;
-	using ConditionFactory = std::function<ConditionFunction()>;
+	using HistoryList = std::list<HistoryRecord>;
+	using BNPackage = std::packaged_task<BNReturn(Neighborhood::Iterator, Neighborhood::Iterator)>;
 
-	ConditionFactory getConditionFunction;
-
-	SolverPointer initialSolver;
-
-	std::function<std::function<bool(uint64_t)>()> conditionFactory;
-	std::function<bool()> conditionCheck;
-
+	/* Enums */
 	enum class StopConditionType {
 		Time,
 		Iterations,
 		Stagnation
-	} stopCondition;
-	uint64_t endConditionValue;
-	uint32_t tabuLenght;
-
-	struct BestNeightboor {
-		Solution neightboor;
-		Move move;
-		uint64_t cost;
 	};
 
+	/* Data structs */
 	struct TabuList {
 		void add(Move& move);
 		bool contains(Move move);
@@ -66,19 +57,49 @@ private:
 		uint32_t index;
 		std::vector<Move> list;
 	};
-	
-	uint32_t historyLenght;
+
+	struct RunStatistic {
+		std::chrono::steady_clock::time_point start;
+		uint64_t iteration;
+		uint64_t stagnation;
+		uint64_t noStagIteration;
+	};
+
 	struct HistoryRecord {
 		TabuList tabu;
 		Move lastMove;
 		Solution solution;
-		uint64_t solutionCost;
-		HistoryRecord(TabuList& tabu, Move& move, Solution& solution, uint64_t cost)
-			: tabu(tabu), lastMove(move), solution(solution), solutionCost(cost) {}
+		uint64_t iteration;
+		uint64_t cost;
+		HistoryRecord(TabuList& tabu, Move& move, Solution& solution, uint64_t iteration, uint64_t cost)
+			: tabu(tabu), lastMove(move), solution(solution), iteration(iteration), cost(cost) {}
 	};
-	using HistoryList = std::list<HistoryRecord>;
 
-	BNReturn findBest(Solution& initial, InstancePointer instance, TabuList& tabu);
+	/* Config variables */
+	StopConditionType stopCondition;
+	uint32_t historyLenght;
+	uint32_t tabuLenght;
+	uint64_t endConditionValue;
+	uint64_t stagnationTreshold;
+	uint64_t neighborhoodOffset;
+	uint8_t noThreads = 2;
+
+	/* Run variables */
+	SolverPointer initialSolver;
+	ConditionFunction conditionCheck;
+	InstancePointer instance;
+	Solution bestGlobal, bestLocal, currentSolution;
+	uint64_t bestGlobalCost, bestLocalCost;
+
+	HistoryList history;
+	TabuList tabu;
+	RunStatistic rs;
+
+	BNReturn findBest();
+	BNReturn findBestInRange(Neighborhood::Iterator left, Neighborhood::Iterator right);
+	void scramble(Solution& eggs);
+	void stagnationRecovery();
+	void reset();
 };
 
 #endif

@@ -40,6 +40,9 @@ Neighborhood::Iterator::pointer Neighborhood::Iterator::operator->()
 
 Neighborhood::Iterator& Neighborhood::Iterator::operator++()
 {
+	if (left == (startingSolution.size() - 1) && right == startingSolution.size()) 
+		return *this;
+
 	right++;
 	if (right >= startingSolution.size()) {
 		left++;
@@ -86,21 +89,18 @@ Neighborhood::Iterator Neighborhood::Iterator::operator--(int)
 	return temp;
 }
 
-Neighborhood::Iterator::Iterator(Solution startingSolution, uint32_t left, uint32_t right)
-	: startingSolution(startingSolution), left(left), right(right), dist(0), currentCached(false)
+Neighborhood::Iterator::Iterator(Solution startingSolution, uint32_t l, uint32_t r)
+	: startingSolution(startingSolution), left(0), right(1), dist(1), currentCached(false)
 {
-	// Calculate distance
-	uint64_t l = 0;
-	uint64_t r = 0;
-	while (l != left || r != right) {
-		dist++;
-		r++;
-		if (r >= startingSolution.size()) {
-			l++;
-			r = l + 1;
-		}
+	if (l == 0 && r == 0 || l > r) {
+		left = 0;
+		right = 0;
+		dist = 0;
 	}
-
+	// Advanve iterator
+	else
+		while (l != left || r != right) 
+			(*this)++;
 	currentSolution.resize(startingSolution.size());
 }
 
@@ -132,21 +132,24 @@ void Neighborhood::Iterator::advance(int64_t distance)
 				distance--;
 			}
 		}
-		//else
-		//	throw std::exception();
+		else {
+			left = 0;
+			right = 1;
+		}
 	}
 	// Advance forward
 	else {
 		// If move is possible
-		if (dist + distance < startingSolution.size()) {
-			while (distance > 0) {
-				(*this)++;
-				distance--;
-			}
+		while (distance > 0) {
+			(*this)++;
+			distance--;
 		}
-		//else
-		//	throw std::exception();
 	}
+}
+
+uint64_t Neighborhood::Iterator::getCurrentDistance()
+{
+	return dist;
 }
 
 Neighborhood::Neighborhood(Solution& starting, NeighborhoodFunction fun)

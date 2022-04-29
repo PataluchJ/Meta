@@ -62,7 +62,8 @@ public:
 		Iterator(Solution startingSolution, uint32_t left, uint32_t right);
 		Move getCurrentMove() { return Move(left, right); }
 
-
+		void advance(int64_t distance);
+		uint64_t getCurrentDistance();
 	private:
 		uint32_t left, right;
 		uint64_t dist;
@@ -72,7 +73,7 @@ public:
 		bool currentCached;
 
 		void regenerate();
-		void advance(int64_t distance);
+		
 	};
 
 	Iterator begin();

@@ -1,9 +1,9 @@
 #include "TabuSearch.h"
 
 
-TabuSearch::TabuSearch(SolverPointer initialSolver, Time ms, uint64_t tabuLenght, uint64_t stagnationTreshold, uint64_t neighborhoodOffset)
+TabuSearch::TabuSearch(SolverPointer initialSolver, Time ms, TabuLenght tl, uint64_t stagnationTreshold, uint64_t neighborhoodOffset)
     : initialSolver(initialSolver), endConditionValue(ms.get()), stopCondition(StopConditionType::Time),
-        tabuLenght(tabuLenght), tabu(tabuLenght), neighborhoodOffset(neighborhoodOffset), stagnationTreshold(stagnationTreshold)
+        tabuLenght(tabuLenght), tabu(0,0), tl(tl), neighborhoodOffset(neighborhoodOffset), stagnationTreshold(stagnationTreshold)
 {
     conditionCheck = [this](RunStatistic& v) -> bool {
         auto now = std::chrono::high_resolution_clock::now();
@@ -13,18 +13,18 @@ TabuSearch::TabuSearch(SolverPointer initialSolver, Time ms, uint64_t tabuLenght
     };
 }
 
-TabuSearch::TabuSearch(SolverPointer initialSolver, Iteratrions iters, uint64_t tabuLenght, uint64_t stagnationTreshold, uint64_t neighborhoodOffset)
+TabuSearch::TabuSearch(SolverPointer initialSolver, Iteratrions iters, TabuLenght tl, uint64_t stagnationTreshold, uint64_t neighborhoodOffset)
     : initialSolver(initialSolver), endConditionValue(iters.get()), stopCondition(StopConditionType::Iterations), 
-        tabuLenght(tabuLenght), tabu(tabuLenght), neighborhoodOffset(neighborhoodOffset), stagnationTreshold(stagnationTreshold)
+        tabuLenght(tabuLenght), tabu(0,0), tl(tl), neighborhoodOffset(neighborhoodOffset), stagnationTreshold(stagnationTreshold)
 {
     conditionCheck = [this](RunStatistic& v) -> bool {
         return v.iteration < endConditionValue;
     };
 }
 
-TabuSearch::TabuSearch(SolverPointer initialSolver, NoImprovment iters, uint64_t tabuLenght, uint64_t stagnationTreshold, uint64_t neighborhoodOffset)
+TabuSearch::TabuSearch(SolverPointer initialSolver, NoImprovment iters, TabuLenght tl, uint64_t stagnationTreshold, uint64_t neighborhoodOffset)
     : initialSolver(initialSolver), endConditionValue(iters.get()), stopCondition(StopConditionType::Stagnation), 
-        tabuLenght(tabuLenght), tabu(tabuLenght), neighborhoodOffset(neighborhoodOffset), stagnationTreshold(stagnationTreshold)
+        tabuLenght(tabuLenght), tabu(0,0), tl(tl), neighborhoodOffset(neighborhoodOffset), stagnationTreshold(stagnationTreshold)
 {
     conditionCheck = [this](RunStatistic& v) -> bool {
         return v.stagnation < endConditionValue;
@@ -68,38 +68,25 @@ Solution TabuSearch::solve(InstancePointer instance)
 
 TabuSearch::BNReturn TabuSearch::findBest()
 {
+
     Neighborhood n(currentSolution);
-    
-    auto size = n.end().getCurrentDistance();
-    auto distancePerThread = size / noThreads;
-    std::vector<Neighborhood::Iterator> iterators;
-    iterators.push_back(n.begin());
-    auto temp = n.begin();
-    while (iterators.size() < noThreads) {
-        temp.advance(distancePerThread);
-        iterators.push_back(temp);
-    }
-    iterators.push_back(n.end());
-    
-    std::vector<std::future<BNReturn>> futures;
-    for (auto i = 0; i < noThreads; i++) {
-        futures.push_back(
-            std::async(std::launch::async, [this, left = iterators[i], right = iterators[i+1]]() {return findBestInRange(left, right); })
-        );
-    }
-    for (auto& future : futures) {
-        future.wait();
-    }
-    auto [bestSolution, bestMove, bestCost] = futures[0].get();
-    for (auto i = 1; i < futures.size(); i++) {
-        auto [solution, move, cost] = futures[i].get();
-        if (cost < bestCost) {
-            bestSolution.swap(solution);
-            bestMove = move;
-            bestCost = cost;
+    Solution neightboor;
+    uint64_t bestCost = UINT64_MAX;
+    Move bestMove;
+    for (auto it = n.begin(), end = n.end(); it != end; it++) {
+       // std::cout << it.getCurrentDistance() << ": " << it.getCurrentMove().l << " " << it.getCurrentMove().r << "\n";
+        if (tabu.avaible(it.getCurrentMove())) {
+            auto& vec = *it;
+            auto cost = instance->calculateGenericSolutionDistance(vec);
+            if (cost < bestCost) {
+                bestCost = cost;
+                neightboor.swap(vec);
+                bestMove = it.getCurrentMove();
+            }
         }
     }
-    return BNReturn(bestSolution, bestMove, bestCost);
+
+    return BNReturn(neightboor, bestMove, bestCost);
 }
 
 
@@ -108,7 +95,8 @@ void TabuSearch::scramble(Solution& eggs)
     std::shuffle(eggs.begin(), eggs.end(), std::default_random_engine());
 }
 
-TabuSearch::BNReturn TabuSearch::findBestInRange(Neighborhood::Iterator left, Neighborhood::Iterator right)
+/*
+TabuSearch::BNReturn TabuSearch::findBestInRange(Neighborhood::Iterator left, Neighborhood::Iterator right, InstancePointer instance)
 {
     Solution neightboor;
     uint64_t bestCost = UINT64_MAX;
@@ -116,7 +104,7 @@ TabuSearch::BNReturn TabuSearch::findBestInRange(Neighborhood::Iterator left, Ne
     for (; left != right; left++) {
         auto& vec = *left;
         auto cost = instance->calculateGenericSolutionDistance(vec);
-        if (!tabu.contains(left.getCurrentMove()) || (cost < bestGlobalCost && bestGlobalCost < bestLocalCost)) {
+        if (!tabu.avaible(left.getCurrentMove()) || (cost < bestGlobalCost && bestGlobalCost < bestLocalCost)) {
             if (cost < bestCost) {
                 bestCost = cost;
                 neightboor.swap(vec);
@@ -132,9 +120,9 @@ TabuSearch::BNReturn TabuSearch::findBestInRange(Neighborhood::Iterator left, Ne
         tabu.add(m);
         return findBest();
     }
-    */
+    *//*
     return std::make_tuple(neightboor, bestMove, bestCost);
-}
+}*/
 
 void TabuSearch::stagnationRecovery()
 {
@@ -166,7 +154,19 @@ void TabuSearch::reset()
 {
     /* Memory */
     history.clear();
-    tabu = TabuList(tabuLenght);
+    auto size = instance->getDistanceMatrix()->size();
+    switch (tl) {
+    case TabuLenght::Root: {
+        tabu = TabuMatrix(size, sqrt(size));
+    }break;
+    case TabuLenght::Normal: {
+        tabu = TabuMatrix(size, size);
+    }break;
+    case TabuLenght::Square: {
+        tabu = TabuMatrix(size, size*size);
+    }break;
+    }
+    
 
     /* Global */
     bestGlobal = initialSolver->solve(instance);
@@ -200,4 +200,23 @@ TabuSearch::TabuList::TabuList(uint32_t lenght)
     : lenght(lenght), index(0)
 {
     list.resize(lenght, Move(0, 0));
+}
+
+TabuSearch::TabuMatrix::TabuMatrix(uint32_t size, uint32_t lenght)
+    : size(size), lenght(lenght), iteration(0)
+{
+    matrix.resize(size);
+    for(auto& v : matrix)
+        v.resize(size, 0);
+}
+
+void TabuSearch::TabuMatrix::add(Move move)
+{
+    matrix[move.l][move.r] = iteration + lenght + 1;
+    iteration++;
+}
+
+bool TabuSearch::TabuMatrix::avaible(Move move)
+{
+    return (matrix[move.l][move.r] >= iteration);
 }

@@ -1,10 +1,17 @@
 #include "TabuSearch.h"
 
-
-TabuSearch::TabuSearch(SolverPointer initialSolver, Time ms, TabuLenght tl, uint64_t stagnationTreshold, uint64_t neighborhoodOffset)
-    : initialSolver(initialSolver), endConditionValue(ms.get()), stopCondition(StopConditionType::Time),
-        tabuLenght(tabuLenght), tabu(0,0), tl(tl), neighborhoodOffset(neighborhoodOffset), stagnationTreshold(stagnationTreshold)
+TabuSearch::TabuSearch(SolverPointer initialSolver, TabuSearchConfig config)
+    : tl(config.tabuLength), historyLenght(config.historyLength), stagnationTreshold(config.stagnationTreshold),
+    neighborhoodOffset(config.neightborhoodStep), neighborhoodFunction(config.neighborhoodType), tabu(0, 0),
+    initialSolver(initialSolver)
 {
+}
+
+TabuSearch::TabuSearch(SolverPointer initialSolver, Time ms, TabuSearchConfig config)
+    : TabuSearch(initialSolver, config)
+{
+    endConditionValue = ms.get();
+    stopCondition = StopConditionType::Time;
     conditionCheck = [this](RunStatistic& v) -> bool {
         auto now = std::chrono::high_resolution_clock::now();
         auto elapsed = now - v.start;
@@ -13,19 +20,21 @@ TabuSearch::TabuSearch(SolverPointer initialSolver, Time ms, TabuLenght tl, uint
     };
 }
 
-TabuSearch::TabuSearch(SolverPointer initialSolver, Iteratrions iters, TabuLenght tl, uint64_t stagnationTreshold, uint64_t neighborhoodOffset)
-    : initialSolver(initialSolver), endConditionValue(iters.get()), stopCondition(StopConditionType::Iterations), 
-        tabuLenght(tabuLenght), tabu(0,0), tl(tl), neighborhoodOffset(neighborhoodOffset), stagnationTreshold(stagnationTreshold)
+TabuSearch::TabuSearch(SolverPointer initialSolver, Iteratrions iters, TabuSearchConfig config)
+    : TabuSearch(initialSolver, config)
 {
+    endConditionValue = iters.get();
+    stopCondition = StopConditionType::Iterations;
     conditionCheck = [this](RunStatistic& v) -> bool {
         return v.iteration < endConditionValue;
     };
 }
 
-TabuSearch::TabuSearch(SolverPointer initialSolver, NoImprovment iters, TabuLenght tl, uint64_t stagnationTreshold, uint64_t neighborhoodOffset)
-    : initialSolver(initialSolver), endConditionValue(iters.get()), stopCondition(StopConditionType::Stagnation), 
-        tabuLenght(tabuLenght), tabu(0,0), tl(tl), neighborhoodOffset(neighborhoodOffset), stagnationTreshold(stagnationTreshold)
+TabuSearch::TabuSearch(SolverPointer initialSolver, NoImprovment iters, TabuSearchConfig config)
+    : TabuSearch(initialSolver, config)
 {
+    endConditionValue = iters.get();
+    stopCondition = StopConditionType::Stagnation;
     conditionCheck = [this](RunStatistic& v) -> bool {
         return v.stagnation < endConditionValue;
     };
@@ -53,6 +62,8 @@ Solution TabuSearch::solve(InstancePointer instance)
             rs.stagnation = 0;
             /* Save better solution in history */
             history.push_back(HistoryRecord(tabu, move, currentSolution, rs.noStagIteration, cost));
+            if (history.size() > historyLenght)
+                history.pop_front();
         }
         else
             rs.stagnation++;
@@ -69,11 +80,11 @@ Solution TabuSearch::solve(InstancePointer instance)
 TabuSearch::BNReturn TabuSearch::findBest()
 {
 
-    Neighborhood n(currentSolution);
+    Neighborhood n(currentSolution,neighborhoodFunction);
     Solution neightboor;
     uint64_t bestCost = UINT64_MAX;
     Move bestMove;
-    for (auto it = n.begin(), end = n.end(); it != end; it++) {
+    for (auto it = n.begin(), end = n.end(); it != end; it.advance(neighborhoodOffset)) {
        // std::cout << it.getCurrentDistance() << ": " << it.getCurrentMove().l << " " << it.getCurrentMove().r << "\n";
         if (tabu.avaible(it.getCurrentMove())) {
             auto& vec = *it;
@@ -95,7 +106,7 @@ void TabuSearch::scramble()
     currentSolution = initialSolution;
     auto size = Neighborhood(currentSolution).end().getCurrentDistance() - 2;
     for (auto i = 0; i < 4; i++) {
-        Neighborhood n(currentSolution);
+        Neighborhood n(currentSolution, neighborhoodFunction);
         auto steps = rand() % size;
         auto it = n.begin();
         it.advance(steps);
@@ -161,10 +172,10 @@ void TabuSearch::reset()
     currentSolution = bestGlobal;
 
     /* Set statistic */
-    rs.start = std::chrono::high_resolution_clock::now();
     rs.stagnation = 0;
     rs.iteration = 0;
     rs.noStagIteration = 0;
+    rs.start = std::chrono::high_resolution_clock::now();
 }
 
 void TabuSearch::TabuList::add(TabuSearch::Move& move)

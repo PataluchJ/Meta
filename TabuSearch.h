@@ -27,9 +27,22 @@ public:
 		Square
 	};
 
-	explicit TabuSearch(SolverPointer initialSolver, Time ms, TabuLenght tl, uint64_t stagnationThreshold = 1000, uint64_t neighborhoodOffset = 0);
-	explicit TabuSearch(SolverPointer initialSolver, Iteratrions iters, TabuLenght tl, uint64_t stagnationThreshold = 1000, uint64_t neighborhoodOffset = 0);
-	explicit TabuSearch(SolverPointer initialSolver, NoImprovment iters, TabuLenght tl, uint64_t stagnationThreshold = 1000, uint64_t neighborhoodOffset = 0);
+	struct TabuSearchConfig {
+		TabuLenght tabuLength;
+		uint32_t historyLength;
+		uint64_t stagnationTreshold;
+		uint64_t neightborhoodStep;
+		Neighborhood::NeighborhoodFunction neighborhoodType;
+
+		TabuSearchConfig() 
+			: tabuLength(TabuLenght::Root), historyLength(UINT32_MAX), stagnationTreshold(300), neightborhoodStep(1),
+			neighborhoodType(Neighborhood::NeighborhoodFunction::Reverse) {}
+	};
+
+	explicit TabuSearch(SolverPointer initialSolver, TabuSearchConfig config);
+	explicit TabuSearch(SolverPointer initialSolver, Time ms, TabuSearchConfig config);
+	explicit TabuSearch(SolverPointer initialSolver, Iteratrions, TabuSearchConfig config);
+	explicit TabuSearch(SolverPointer initialSolver, NoImprovment, TabuSearchConfig config);
 	Solution solve(InstancePointer instance) override;
 	std::string getName() override { return "TabuSearch"; };
 
@@ -102,6 +115,7 @@ private:
 	uint64_t neighborhoodOffset;
 	uint8_t noThreads = 2;
 	TabuLenght tl;
+	Neighborhood::NeighborhoodFunction neighborhoodFunction;
 
 	/* Run variables */
 	SolverPointer initialSolver;

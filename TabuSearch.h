@@ -27,9 +27,9 @@ public:
 		Square
 	};
 
-	explicit TabuSearch(SolverPointer initialSolver, Time ms, TabuLenght tl, uint64_t stagnationThreshold = 200, uint64_t neighborhoodOffset = 0);
-	explicit TabuSearch(SolverPointer initialSolver, Iteratrions iters, TabuLenght tl, uint64_t stagnationThreshold = 200, uint64_t neighborhoodOffset = 0);
-	explicit TabuSearch(SolverPointer initialSolver, NoImprovment iters, TabuLenght tl, uint64_t stagnationThreshold = 200, uint64_t neighborhoodOffset = 0);
+	explicit TabuSearch(SolverPointer initialSolver, Time ms, TabuLenght tl, uint64_t stagnationThreshold = 1000, uint64_t neighborhoodOffset = 0);
+	explicit TabuSearch(SolverPointer initialSolver, Iteratrions iters, TabuLenght tl, uint64_t stagnationThreshold = 1000, uint64_t neighborhoodOffset = 0);
+	explicit TabuSearch(SolverPointer initialSolver, NoImprovment iters, TabuLenght tl, uint64_t stagnationThreshold = 1000, uint64_t neighborhoodOffset = 0);
 	Solution solve(InstancePointer instance) override;
 	std::string getName() override { return "TabuSearch"; };
 
@@ -107,7 +107,7 @@ private:
 	SolverPointer initialSolver;
 	ConditionFunction conditionCheck;
 	InstancePointer instance;
-	Solution bestGlobal, bestLocal, currentSolution;
+	Solution bestGlobal, bestLocal, currentSolution, initialSolution;
 	uint64_t bestGlobalCost, bestLocalCost;
 
 	HistoryList history;
@@ -116,7 +116,7 @@ private:
 
 	BNReturn findBest();
 	//static BNReturn findBestInRange(Neighborhood::Iterator left, Neighborhood::Iterator right, InstancePointer instance);
-	void scramble(Solution& eggs);
+	void scramble();
 	void stagnationRecovery();
 	void reset();
 };

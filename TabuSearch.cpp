@@ -35,16 +35,12 @@ Solution TabuSearch::solve(InstancePointer instance)
 {
     this->instance = instance;
     reset();
-
+    //scramble();
     while (conditionCheck(rs)) {
        // std::cout << "I: " << rs.iteration << "\n";
         rs.iteration++;
         rs.noStagIteration++;
         auto[neightboor, move, cost] = findBest();
-
-        /* Check if history record should be saved */
-        if (rs.iteration % (stagnationTreshold*2) == 0)
-            history.push_back(HistoryRecord(tabu, move, currentSolution, rs.noStagIteration, cost));
 
         tabu.add(move);
         currentSolution.swap(neightboor);
@@ -53,7 +49,10 @@ Solution TabuSearch::solve(InstancePointer instance)
         if (cost < bestLocalCost) {
             std::copy(currentSolution.begin(), currentSolution.end(), bestLocal.begin());
             bestLocalCost = cost;
+            std::cout << "Local: " << bestLocalCost << "\n";
             rs.stagnation = 0;
+            /* Save better solution in history */
+            history.push_back(HistoryRecord(tabu, move, currentSolution, rs.noStagIteration, cost));
         }
         else
             rs.stagnation++;
@@ -62,7 +61,8 @@ Solution TabuSearch::solve(InstancePointer instance)
         if (rs.stagnation > stagnationTreshold)
             stagnationRecovery();
     }
-
+    if (bestLocal < bestGlobal)
+        bestGlobal.swap(bestLocal);
     return bestGlobal;
 }
 
@@ -90,39 +90,20 @@ TabuSearch::BNReturn TabuSearch::findBest()
 }
 
 
-void TabuSearch::scramble(Solution& eggs)
+void TabuSearch::scramble()
 {
-    std::shuffle(eggs.begin(), eggs.end(), std::default_random_engine());
+    /* Perform random moves on solution */
+    currentSolution = initialSolution;
+    auto size = Neighborhood(currentSolution).end().getCurrentDistance() - 2;
+    for (auto i = 0; i < 4; i++) {
+        Neighborhood n(currentSolution);
+        auto steps = rand() % size;
+        auto it = n.begin();
+        it.advance(steps);
+        currentSolution = *it;
+    }
+    //std::shuffle(eggs.begin(), eggs.end(), std::default_random_engine());
 }
-
-/*
-TabuSearch::BNReturn TabuSearch::findBestInRange(Neighborhood::Iterator left, Neighborhood::Iterator right, InstancePointer instance)
-{
-    Solution neightboor;
-    uint64_t bestCost = UINT64_MAX;
-    Move bestMove;
-    for (; left != right; left++) {
-        auto& vec = *left;
-        auto cost = instance->calculateGenericSolutionDistance(vec);
-        if (!tabu.avaible(left.getCurrentMove()) || (cost < bestGlobalCost && bestGlobalCost < bestLocalCost)) {
-            if (cost < bestCost) {
-                bestCost = cost;
-                neightboor.swap(vec);
-                bestMove = left.getCurrentMove();
-            }
-        }
-    }
-    /* Tabu Lock */
-    /* TODO: Optimalize */
-    /* Unsupported in multithread
-    if (bestCost == UINT64_MAX) {
-        auto m = Move(0, 0);
-        tabu.add(m);
-        return findBest();
-    }
-    *//*
-    return std::make_tuple(neightboor, bestMove, bestCost);
-}*/
 
 void TabuSearch::stagnationRecovery()
 {
@@ -135,7 +116,7 @@ void TabuSearch::stagnationRecovery()
     //std::cout << "Stagnation detected after " << rs.noStagIteration << " iterations. ";
     if (history.size() == 0) {
         //std::cout << "No point to revert to. Scrambling.\n";
-        scramble(currentSolution);
+        scramble();
 
     }
     else {
@@ -146,6 +127,7 @@ void TabuSearch::stagnationRecovery()
         history.pop_back();
         rs.stagnation = 0;
         rs.noStagIteration = rs.iteration;
+
         //std::cout << "Reverted to iteration: " << rec.iteration << "\n";
     }
 }
@@ -168,8 +150,9 @@ void TabuSearch::reset()
     }
     
 
+    initialSolution = initialSolver->solve(instance);
     /* Global */
-    bestGlobal = initialSolver->solve(instance);
+    bestGlobal = initialSolution;
     bestGlobalCost = instance->calculateGenericSolutionDistance(bestGlobal);
 
     /* Local */
@@ -212,11 +195,11 @@ TabuSearch::TabuMatrix::TabuMatrix(uint32_t size, uint32_t lenght)
 
 void TabuSearch::TabuMatrix::add(Move move)
 {
-    matrix[move.l][move.r] = iteration + lenght + 1;
+    matrix[move.l][move.r] = iteration + lenght + 2;
     iteration++;
 }
 
 bool TabuSearch::TabuMatrix::avaible(Move move)
 {
-    return (matrix[move.l][move.r] >= iteration);
+    return (matrix[move.l][move.r] <= iteration);
 }

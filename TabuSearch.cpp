@@ -49,7 +49,7 @@ Solution TabuSearch::solve(InstancePointer instance)
         if (cost < bestLocalCost) {
             std::copy(currentSolution.begin(), currentSolution.end(), bestLocal.begin());
             bestLocalCost = cost;
-            std::cout << "Local: " << bestLocalCost << "\n";
+            //std::cout << "Local: " << bestLocalCost << "\n";
             rs.stagnation = 0;
             /* Save better solution in history */
             history.push_back(HistoryRecord(tabu, move, currentSolution, rs.noStagIteration, cost));
@@ -85,7 +85,6 @@ TabuSearch::BNReturn TabuSearch::findBest()
             }
         }
     }
-
     return BNReturn(neightboor, bestMove, bestCost);
 }
 
@@ -145,7 +144,7 @@ void TabuSearch::reset()
         tabu = TabuMatrix(size, size);
     }break;
     case TabuLenght::Square: {
-        tabu = TabuMatrix(size, size*size);
+        tabu = TabuMatrix(size, size*(size-1)/3.0);
     }break;
     }
     

@@ -6,36 +6,37 @@
 
 Greedy::Greedy(){}
 
-void Greedy::solve(InstancePointer instance)
+Solution Greedy::solve(InstancePointer instance)
 {
-    SolutionPointer solution = SolutionPointer(new Solution);
-    SolutionPointer bestSolution = instance->getSolution();;
+    auto size = instance->getDistanceMatrix()->size();
+    Solution currentSolution{};
+    Solution bestSolution{};
+    currentSolution.resize(size);
+    bestSolution.resize(size);
     uint64_t bestSolutionCost = UINT64_MAX;
-    auto matrix = instance->getDistanceMatrix();
-    for (uint32_t v = 0; v < matrix->size(); v++) {
-        solveFromStartingVerticle(instance, solution, v);
-        uint64_t cost = instance->calculateGenericSolutionDistance(solution);
+    for (uint32_t v = 0; v < size; v++) {
+        solveFromStartingVerticle(instance, currentSolution, v);
+        uint64_t cost = instance->calculateGenericSolutionDistance(currentSolution);
         if (cost < bestSolutionCost) {
-            std::copy(solution->begin(), solution->end(), bestSolution->begin());
+            bestSolution.swap(currentSolution);
+            bestSolutionCost = cost;
         }
     }
+    return bestSolution;
 }
-void Greedy::solveFromStartingVerticle(InstancePointer instance, SolutionPointer solutionVector, uint32_t startingVerticle)
+void Greedy::solveFromStartingVerticle(InstancePointer instance, Solution& solutionVector, uint32_t startingVerticle)
 {
     auto distanceMatrix = instance->getDistanceMatrix();
     auto size = distanceMatrix->size();
     
     std::vector<bool> visited;
     visited.resize(size, false);
-
-    solutionVector->clear();
-    solutionVector->reserve(size);
-    solutionVector->push_back(startingVerticle);
     visited[startingVerticle] = true;
 
     uint32_t noVisited = 1;
     uint32_t currentVerticle = startingVerticle;
-
+    uint32_t solutionIndex = 1;
+    solutionVector[0] = startingVerticle;
     while (noVisited != size)
     {
         uint32_t bestVert = 0;
@@ -43,6 +44,7 @@ void Greedy::solveFromStartingVerticle(InstancePointer instance, SolutionPointer
 
         for (int j = 0; j < size; ++j)
         {
+            //complexity++;
             if (!visited[j] && j != currentVerticle)
             {
                 uint64_t cost = (*distanceMatrix)[currentVerticle][j];
@@ -54,7 +56,9 @@ void Greedy::solveFromStartingVerticle(InstancePointer instance, SolutionPointer
             }
         }
 
-        solutionVector->push_back(bestVert);
+//        solutionVector->push_back(bestVert);
+        solutionVector[solutionIndex] = bestVert;
+        solutionIndex++;
         visited[bestVert] = true;
         ++noVisited;
         currentVerticle = bestVert;

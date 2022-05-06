@@ -4,11 +4,7 @@ TSPInstance::TSPInstance(size_t size)
 {
 	/* Set pointers */
 	this->adjacencyMatrix = DistanceMatrixPointer(new DistanceMatrix);
-	this->solution = SolutionPointer(new Solution);
-	this->optimalSolution = SolutionPointer(new Solution);
 	/* Resize containers */
-	this->solution->resize(size, 0);
-	this->optimalSolution->resize(size, 0);
 	this->adjacencyMatrix->resize(size);
 	for (auto& subVector : *(this->adjacencyMatrix))
 		subVector.resize(size, 0);
@@ -21,26 +17,6 @@ TSPInstance::~TSPInstance()
 DistanceMatrixPointer TSPInstance::getDistanceMatrix()
 {
 	return this->adjacencyMatrix;
-}
-
-SolutionPointer TSPInstance::getSolution()
-{
-	return this->solution;
-}
-
-SolutionPointer TSPInstance::getOptimalSolution()
-{
-	return this->optimalSolution;
-}
-
-uint64_t TSPInstance::calculateSolutionDistance()
-{
-	return this->calculateGenericSolutionDistance(this->solution);
-}
-
-uint64_t TSPInstance::calculateOptimalSolutionDistance()
-{
-	return this->calculateGenericSolutionDistance(this->optimalSolution);
 }
 
 InstancePointer TSPInstance::generateAsymetricInstance(size_t size, unsigned int seed, uint32_t minimumDistance, uint32_t maximumDistance)
@@ -132,33 +108,33 @@ InstancePointer TSPInstance::loadFromFile(const std::string& filepath)
 	return instance;
 }
 
-bool TSPInstance::loadTourFromFile(const std::string& filepath)
+Solution TSPInstance::loadTourFromFile(const std::string& filepath)
 {
 	TSPFile file(filepath);
 	if (!file.isGood()) {
 		std::cerr << "Unable to load instance from file.\n";
-		return false;
+		return Solution{};
 	}
-
-	optimalSolution->resize(file.dimension, 0);
+	Solution optimalSolution;
+	optimalSolution.resize(file.dimension, 0);
 	if (file.tour.size() != file.dimension) {
 		std::cerr << "File does not contain tour section!";
-		return false;
+		return Solution{};
 	}
 
 	for (size_t i = 0; i < file.dimension; i++) {
-		(*optimalSolution)[i] = file.tour[i];
+		optimalSolution[i] = file.tour[i];
 	}
 
-	return true;
+	return optimalSolution;
 }
 
-uint64_t TSPInstance::calculateGenericSolutionDistance(SolutionPointer sol)
+uint64_t TSPInstance::calculateGenericSolutionDistance(Solution& solution)
 {
 	uint64_t distance = 0;
-	for (size_t i = 0; i < sol->size()-1; i++) {
-		distance += (*adjacencyMatrix)[(*sol)[i]][(*sol)[i+1]];
+	for (size_t i = 0; i < solution.size()-1; i++) {
+		distance += (*adjacencyMatrix)[solution[i]][solution[i+1]];
 	}
-	distance += (*adjacencyMatrix)[(*sol)[sol->size()-1]][(*sol)[0]];
+	distance += (*adjacencyMatrix)[solution[solution.size()-1]][solution[0]];
 	return distance;
 }

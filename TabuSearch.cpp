@@ -3,7 +3,7 @@
 TabuSearch::TabuSearch(SolverPointer initialSolver, TabuSearchConfig config)
     : tl(config.tabuLength), historyLenght(config.historyLength), stagnationTreshold(config.stagnationTreshold),
     neighborhoodOffset(config.neightborhoodStep), neighborhoodFunction(config.neighborhoodType), tabu(0, 0),
-    initialSolver(initialSolver)
+    initialSolver(initialSolver), PRDReference(0)
 {
 }
 
@@ -44,7 +44,7 @@ Solution TabuSearch::solve(InstancePointer instance)
 {
     this->instance = instance;
     reset();
-    //scramble();
+    scramble();
     while (conditionCheck(rs)) {
        // std::cout << "I: " << rs.iteration << "\n";
         rs.iteration++;
@@ -56,6 +56,11 @@ Solution TabuSearch::solve(InstancePointer instance)
 
         /* Check if new solution is better than current local */
         if (cost < bestLocalCost) {
+            std::cout << "Improvment at iteration " << rs.iteration << ", new min = " << cost;
+            if (PRDReference != 0) {
+                std::cout << ", prd = " << ((double)cost - (double)PRDReference) / (double)PRDReference;
+            }
+            std::cout << "\n";
             std::copy(currentSolution.begin(), currentSolution.end(), bestLocal.begin());
             bestLocalCost = cost;
             //std::cout << "Local: " << bestLocalCost << "\n";
@@ -77,6 +82,11 @@ Solution TabuSearch::solve(InstancePointer instance)
     return bestGlobal;
 }
 
+void TabuSearch::setPRDReference(uint64_t value)
+{
+    PRDReference = value;
+}
+
 TabuSearch::BNReturn TabuSearch::findBest()
 {
 
@@ -86,9 +96,9 @@ TabuSearch::BNReturn TabuSearch::findBest()
     Move bestMove;
     for (auto it = n.begin(), end = n.end(); it != end; it.advance(neighborhoodOffset)) {
        // std::cout << it.getCurrentDistance() << ": " << it.getCurrentMove().l << " " << it.getCurrentMove().r << "\n";
-        if (tabu.avaible(it.getCurrentMove())) {
-            auto& vec = *it;
-            auto cost = instance->calculateGenericSolutionDistance(vec);
+        auto& vec = *it;
+        auto cost = instance->calculateGenericSolutionDistance(vec);
+        if ((cost < bestGlobalCost && cost < bestCost) || tabu.avaible(it.getCurrentMove())) {
             if (cost < bestCost) {
                 bestCost = cost;
                 neightboor.swap(vec);
@@ -102,10 +112,11 @@ TabuSearch::BNReturn TabuSearch::findBest()
 
 void TabuSearch::scramble()
 {
+   // std::cout << "S";
     /* Perform random moves on solution */
     currentSolution = initialSolution;
     auto size = Neighborhood(currentSolution).end().getCurrentDistance() - 2;
-    for (auto i = 0; i < 4; i++) {
+    for (auto i = 0; i < 60; i++) {
         Neighborhood n(currentSolution, neighborhoodFunction);
         auto steps = rand() % size;
         auto it = n.begin();
@@ -117,6 +128,7 @@ void TabuSearch::scramble()
 
 void TabuSearch::stagnationRecovery()
 {
+    //std::cout << "#";
     /* Compare local best to global */
     if (bestLocalCost < bestGlobalCost) {
         bestGlobal.swap(bestLocal);

@@ -35,7 +35,7 @@ public:
 		Neighborhood::NeighborhoodFunction neighborhoodType;
 
 		TabuSearchConfig() 
-			: tabuLength(TabuLenght::Root), historyLength(UINT32_MAX), stagnationTreshold(300), neightborhoodStep(1),
+			: tabuLength(TabuLenght::Root), historyLength(50), stagnationTreshold(1000), neightborhoodStep(1),
 			neighborhoodType(Neighborhood::NeighborhoodFunction::Reverse) {}
 	};
 
@@ -45,6 +45,8 @@ public:
 	explicit TabuSearch(SolverPointer initialSolver, NoImprovment, TabuSearchConfig config);
 	Solution solve(InstancePointer instance) override;
 	std::string getName() override { return "TabuSearch"; };
+
+	void setPRDReference(uint64_t value);
 
 private:
 	/* Structs forward declaration */
@@ -127,6 +129,8 @@ private:
 	HistoryList history;
 	TabuMatrix tabu;
 	RunStatistic rs;
+
+	uint64_t PRDReference;
 
 	BNReturn findBest();
 	//static BNReturn findBestInRange(Neighborhood::Iterator left, Neighborhood::Iterator right, InstancePointer instance);

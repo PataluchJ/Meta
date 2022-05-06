@@ -89,8 +89,8 @@ Neighborhood::Iterator Neighborhood::Iterator::operator--(int)
 	return temp;
 }
 
-Neighborhood::Iterator::Iterator(Solution startingSolution, uint32_t l, uint32_t r)
-	: startingSolution(startingSolution), left(0), right(1), dist(1), currentCached(false)
+Neighborhood::Iterator::Iterator(Solution startingSolution, uint32_t l, uint32_t r, NeighborhoodFunction nf)
+	: startingSolution(startingSolution), left(0), right(1), dist(1), currentCached(false), nf(nf)
 {
 	if (l == 0 && r == 0 || l > r) {
 		left = 0;
@@ -114,9 +114,24 @@ void Neighborhood::Iterator::regenerate()
 	auto rightIterator = currentSolution.begin();
 
 	std::advance(leftIterator, left);
-	std::advance(rightIterator, right+1);
+	std::advance(rightIterator, right);
 
-	std::reverse(leftIterator, rightIterator);
+	switch (nf) {
+	case NeighborhoodFunction::Insert: {
+		auto value = *leftIterator;
+		currentSolution.insert(++rightIterator, value);
+		leftIterator = currentSolution.begin();
+		std::advance(leftIterator, left);
+		currentSolution.erase(leftIterator);
+	} break;
+	case NeighborhoodFunction::Reverse: {
+		std::reverse(leftIterator, ++rightIterator);
+	} break;
+	case NeighborhoodFunction::Swap: {
+		std::swap(*leftIterator, *rightIterator);
+	} break;
+	}
+	
 	currentCached = true;
 }
 
@@ -153,7 +168,7 @@ uint64_t Neighborhood::Iterator::getCurrentDistance()
 }
 
 Neighborhood::Neighborhood(Solution& starting, NeighborhoodFunction fun)
-	: startingSolution(starting)
+	: startingSolution(starting), nf(fun)
 {
 }
 
@@ -163,10 +178,10 @@ Neighborhood::~Neighborhood()
 
 Neighborhood::Iterator Neighborhood::begin()
 {
-	return Iterator(startingSolution, 0, 1);
+	return Iterator(startingSolution, 0, 1, nf);
 }
 
 Neighborhood::Iterator Neighborhood::end()
 {
-	return Iterator(startingSolution, startingSolution.size() - 1, startingSolution.size());
+	return Iterator(startingSolution, startingSolution.size() - 1, startingSolution.size(), nf);
 }

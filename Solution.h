@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <memory>
 
+
 using Solution = std::vector<uint32_t>;
 using SolutionPointer = std::shared_ptr<Solution>;
 /*
@@ -59,12 +60,13 @@ public:
 			friend bool operator==(const Move& a, const Move& b);
 		};
 
-		Iterator(Solution startingSolution, uint32_t left, uint32_t right);
+		Iterator(Solution startingSolution, uint32_t left, uint32_t right, NeighborhoodFunction nf);
 		Move getCurrentMove() { return Move(left, right); }
 
 		void advance(int64_t distance);
 		uint64_t getCurrentDistance();
 	private:
+		NeighborhoodFunction nf;
 		uint32_t left, right;
 		uint64_t dist;
 		Solution startingSolution;
@@ -80,6 +82,7 @@ public:
 	Iterator end();
 private:
 	Solution startingSolution;
+	NeighborhoodFunction nf;
 };
 
 #endif

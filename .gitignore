@@ -3,5 +3,8 @@
 *.atsp
 .vs
 __pycache__
-*.vcxproj*
 x64
+Results/*
+massif.*
+out
+build

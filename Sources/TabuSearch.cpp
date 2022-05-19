@@ -1,4 +1,4 @@
-#include "TabuSearch.h"
+#include <TabuSearch.hpp>
 
 TabuSearch::TabuSearch(SolverPointer initialSolver, TabuSearchConfig config)
     : tl(config.tabuLength), historyLenght(config.historyLength), stagnationTreshold(config.stagnationTreshold),

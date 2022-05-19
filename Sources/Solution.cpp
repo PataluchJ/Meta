@@ -1,4 +1,4 @@
-#include "Solution.h"
+#include <Solution.hpp>
 
 bool operator==(const Neighborhood::Iterator & a, const Neighborhood::Iterator& b) {
 	return a.dist == b.dist;

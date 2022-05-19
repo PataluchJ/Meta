@@ -1,8 +1,9 @@
 #ifndef META_TABUSEARCH_H_
 #define META_TABUSEARCH_H_
 
-#include "Solver.h"
-#include "NamedType.h"
+#include <Solver.hpp>
+#include <NamedType.hpp>
+
 #include <functional>
 #include <tuple>
 #include <chrono>
@@ -92,7 +93,7 @@ private:
 	};
 
 	struct RunStatistic {
-		std::chrono::steady_clock::time_point start;
+		std::chrono::high_resolution_clock::time_point start;
 		uint64_t iteration;
 		uint64_t stagnation;
 		uint64_t noStagIteration;

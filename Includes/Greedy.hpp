@@ -1,7 +1,7 @@
 #ifndef META_TSP_GREEDY_H_
 #define META_TSP_GREEDY_H_
 
-#include "Solver.h"
+#include <Solver.hpp>
 
 class Greedy : public Solver
 {

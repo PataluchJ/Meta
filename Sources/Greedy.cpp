@@ -1,5 +1,6 @@
-#include "Greedy.h"
-#include "TSPInstance.h"
+#include <Greedy.hpp>
+#include <TSPInstance.hpp>
+
 #include <vector>
 #include <algorithm>
 #include <random>

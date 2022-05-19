@@ -1,11 +1,13 @@
-#include "TSPFile.h"
+#include <TSPFile.hpp>
 
 TSPFile::TSPFile(const std::string& filepath)
 {
 	success = false;
 	this->file.open(filepath, std::ios::in);
-	if(file.good())
+	if (file.is_open())
 		parseFile();
+	else
+		Logger::logCriticalError("[TSPFile] Failed to open file.");
 }
 
 TSPFile::~TSPFile()
@@ -57,7 +59,7 @@ void TSPFile::parseFile()
 }
 
 void TSPFile::parseDemandSection(){
-	std::cerr << "DEMAND_SECTION not supported. Skiped.\n";
+	Logger::logNotCriticalError("[TSPFile] DEMAND_SECTION not supported.");
 	/* Format:
 	*	<integer - node number> <integer - demand>
 	*	Skip this section
@@ -68,7 +70,7 @@ void TSPFile::parseDemandSection(){
 	}
 }
 void TSPFile::parseDepotSection() {
-	std::cerr << "DEPOT_SECTION not supported.\n";
+	Logger::logNotCriticalError("[TSPFile] DEPOT_SECTION not supported.");
 	/* Format:
 	*	list terminated with -1
 	*	Skip this section
@@ -79,7 +81,7 @@ void TSPFile::parseDepotSection() {
 	} while (readed != -1);
 }
 void TSPFile::parseDisplayDataSection() {
-	std::cerr << "DISPLAY_DATA_SECTION not supported. Skipping\n";
+	Logger::logNotCriticalError("[TSPFile] DISPLAY_DATA_SECTION not supported.");
 	std::string line;
 	for (size_t i = 0; i < dimension; i++)
 		std::getline(file, line);
@@ -122,7 +124,7 @@ void TSPFile::parseEdgeDataSection() {
 }
 void TSPFile::parseEdgeWeightSection() {
 	if (weightType != EdgeWeightType::Explicit) {
-		std::cerr << "EDGE_WEIGHT_SECTION is not explicit! Cannot parse.\n";
+		Logger::logCriticalError("[TSPFile] EDGE_WEIGHT_SECTION is not explicit! Cannot parse.");
 		return;
 	}
 	IteratorForwardFunction forward;
@@ -240,7 +242,7 @@ void TSPFile::parseEdgeWeightSection() {
 		diagonalIncluded = true;
 	}break;
 	default: {
-		std::cerr << "Unknow Edge weight format.\n";
+		Logger::logCriticalError("[TSPFile] Unknow Edge weight format.");
 		return;
 	} break;
 	}
@@ -353,7 +355,7 @@ void TSPFile::parseNodeCoordSection() {
 		};
 	}break;
 	default: {
-		std::cerr << "Unsupported distance function.\n";
+		Logger::logCriticalError("[TSPFile] Unsupported distance function.");
 		return;
 	}break;
 	}
@@ -443,8 +445,12 @@ void TSPFile::parseSpecificationLine(std::string& line)
 			this->coordType = stringToCoordType(value);
 		else if (key.compare("DISPLAY_DATA_TYPE") == 0)
 			this->displayType = stringToDisplayType(value);
-		else
-			std::cerr << "Unknow specyfication key: " << key << " : " << value << "\n";
+		else {
+			std::string message = "Unknow specyfication key: ";
+			message += key + std::string(":") + value;
+			Logger::logNotCriticalError(message);
+		}
+
 	}
 	else {
 		/* section */
@@ -462,26 +468,24 @@ void TSPFile::parseSpecificationLine(std::string& line)
 			this->parseMode = ParseMode::EdgeData;
 		}
 		else if (line.compare("FIXED_EDGE_SECTION") == 0) {
-			//std::cerr << "FIXED_EDGE_SECTION not supported.\n";
 			this->parseMode = ParseMode::FixedEdges;
 		}
 		else if (line.compare("DISPLAY_DATA_SECTION") == 0) {
-			//std::cerr << "DISPLAY_DATA_SECTION not supported.\n";
 			this->parseMode = ParseMode::DisplayData;
 		}
 		else if (line.compare("TOUR_SECTION") == 0) {
-			//std::cerr << "TOUR_SECTION not supported.\n";
 			this->parseMode = ParseMode::Tour;
 		}
 		else if (line.compare("EDGE_WEIGHT_SECTION") == 0) {
-			//std::cerr << "EDGE_WEIGHT_SECTION not supported.\n";
 			this->parseMode = ParseMode::EdgeWeight;
 		}
 		else if (line.compare("EOF") == 0) {
 			this->parseMode = ParseMode::Eof;
 		}
 		else {
-			std::cerr << "Unknow section: " << line << "\n";
+			std::string message = "Unknow section: ";
+			message += line;
+			Logger::logNotCriticalError(message);
 		}
 
 	}
@@ -501,7 +505,7 @@ TSPFile::Type TSPFile::stringToType(const std::string& name) {
 		return Type::CVRP;
 	if (name.compare("TOUR") == 0)
 		return Type::TOUR;
-	std::cerr << "Unknow problem type: " << name << "\n";
+	Logger::logCriticalError(std::string("Unknow problem type:") + name);
 	return Type::Unknow;
 }
 TSPFile::EdgeWeightType TSPFile::stringToWeightType(const std::string& name) {
@@ -531,7 +535,7 @@ TSPFile::EdgeWeightType TSPFile::stringToWeightType(const std::string& name) {
 		return EdgeWeightType::XRAY2;
 	if (name.compare("SPECIAL") == 0)
 		return EdgeWeightType::Special;
-	std::cerr << "Unknow weight type: " << name << "\n";
+	Logger::logCriticalError(std::string("Unknow weight type:") + name);
 	return EdgeWeightType::Unknow;
 }
 TSPFile::EdgeWeightFormat TSPFile::stringToWeightFormat(const std::string& name) {
@@ -555,7 +559,8 @@ TSPFile::EdgeWeightFormat TSPFile::stringToWeightFormat(const std::string& name)
 		return EdgeWeightFormat::UpperDiagCol;
 	if (name.compare("LOWER_DIAG_COL") == 0)
 		return EdgeWeightFormat::LowerDiagCol;
-	std::cerr << "Unknow weight format: " << name << "\n";
+	Logger::logCriticalError(std::string("Unknow weight format:") + name);
+
 	return EdgeWeightFormat::Unknow;
 }
 TSPFile::EdgeDataFormat TSPFile::stringToDataFormat(const std::string& name) {
@@ -563,7 +568,8 @@ TSPFile::EdgeDataFormat TSPFile::stringToDataFormat(const std::string& name) {
 		return EdgeDataFormat::AdjList;
 	if (name.compare("EDGE_LIST") == 0)
 		return EdgeDataFormat::EdgeList;
-	std::cerr << "Unknow data format: " << name << "\n";
+	Logger::logCriticalError(std::string("Unknow data format:") + name);
+
 	return EdgeDataFormat::Unknow;
 }
 TSPFile::NodeCoordType TSPFile::stringToCoordType(const std::string& name) {
@@ -573,7 +579,8 @@ TSPFile::NodeCoordType TSPFile::stringToCoordType(const std::string& name) {
 		return NodeCoordType::ThreedCoords;
 	if (name.compare("NO_CORDS") == 0)
 		return NodeCoordType::NoCoords;
-	std::cerr << "Unknow coord type: " << name << "\n";
+	Logger::logCriticalError(std::string("Unknow coord type:") + name);
+
 	return NodeCoordType::Unknow;
 }
 TSPFile::DisplayDataType TSPFile::stringToDisplayType(const std::string& name) {
@@ -583,6 +590,7 @@ TSPFile::DisplayDataType TSPFile::stringToDisplayType(const std::string& name) {
 		return DisplayDataType::TwodDisplay;
 	if (name.compare("NO_DISPLAY") == 0)
 		return DisplayDataType::NoDisplay;
-	std::cerr << "Unknow display type: " << name << "\n";
+	Logger::logCriticalError(std::string("Unknow display type:") + name);
+
 	return DisplayDataType::Unknow;
 }

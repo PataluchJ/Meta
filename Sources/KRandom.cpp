@@ -1,5 +1,6 @@
-#include "KRandom.h"
-#include "TSPInstance.h"
+#include <TSPInstance.hpp>
+#include <KRandom.hpp>
+
 #include <vector>
 #include <algorithm>
 #include <random>

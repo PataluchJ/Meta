@@ -1,4 +1,4 @@
-#include "TSPInstance.h"
+#include <TSPInstance.hpp>
 
 TSPInstance::TSPInstance(size_t size)
 {
@@ -22,7 +22,7 @@ DistanceMatrixPointer TSPInstance::getDistanceMatrix()
 InstancePointer TSPInstance::generateAsymetricInstance(size_t size, unsigned int seed, uint32_t minimumDistance, uint32_t maximumDistance)
 {
 	if (minimumDistance > maximumDistance) {
-		std::cerr << "Minimal distance must be smaller than maximum.\n";
+		Logger::logCriticalError("[TSPInstance] Minimal distance must be smaller than maximum.");
 		return nullptr;
 	}
 	InstancePointer instance = InstancePointer(new TSPInstance(size));
@@ -42,7 +42,7 @@ InstancePointer TSPInstance::generateAsymetricInstance(size_t size, unsigned int
 InstancePointer TSPInstance::generateSymtericInstaance(size_t size, unsigned int seed, uint32_t minimumDistance, uint32_t maximumDistance)
 {
 	if (minimumDistance > maximumDistance) {
-		std::cerr << "Minimal distance must be smaller than maximum.\n";
+		Logger::logCriticalError("[TSPInstance] Minimal distance must be smaller than maximum.");
 		return nullptr;
 	}
 	InstancePointer instance = InstancePointer(new TSPInstance(size));
@@ -94,7 +94,7 @@ InstancePointer TSPInstance::loadFromFile(const std::string& filepath)
 {
 	TSPFile file(filepath);
 	if (!file.isGood()) {
-		std::cerr << "Unable to load instance from file.\n";
+		Logger::logCriticalError("[TSPInstance] Unable to load instance from file.");
 		return nullptr;
 	}
 	InstancePointer instance(new TSPInstance(file.dimension));
@@ -112,13 +112,13 @@ Solution TSPInstance::loadTourFromFile(const std::string& filepath)
 {
 	TSPFile file(filepath);
 	if (!file.isGood()) {
-		std::cerr << "Unable to load instance from file.\n";
+		Logger::logCriticalError("[TSPInstance] Unable to load instance from file.");
 		return Solution{};
 	}
 	Solution optimalSolution;
 	optimalSolution.resize(file.dimension, 0);
 	if (file.tour.size() != file.dimension) {
-		std::cerr << "File does not contain tour section!";
+		Logger::logCriticalError("[TSPInstance] File doesn't contain tour section.");
 		return Solution{};
 	}
 

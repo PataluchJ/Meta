@@ -1,10 +1,10 @@
 #ifndef META_TSP_KRANDOMTESTER_H_
 #define META_TSP_KRANDOMTESTER_H_
 
-#include "TSPInstance.h"
-#include "KRandom.h"
-#include "Greedy.h"
-#include "TwoOpt.h"
+#include "TSPInstance.hpp"
+#include "KRandom.hpp"
+#include "Greedy.hpp"
+#include "TwoOpt.hpp"
 
 class KRandomTester
 {

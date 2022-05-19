@@ -1,7 +1,7 @@
 #ifndef META_TSP_SOLVER_H_
 #define META_TSP_SOLVER_H_
 
-#include "TSPInstance.h"
+#include <TSPInstance.hpp>
 
 class Solver
 {

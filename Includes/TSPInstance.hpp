@@ -3,13 +3,12 @@
 
 #include <vector>
 #include <memory>
-#include <string>
 #include <random>
 #include <fstream>
-#include <iostream>
 
-#include "Solution.h"
-#include "TSPFile.h"
+#include <Logger.hpp>
+#include <Solution.hpp>
+#include <TSPFile.hpp>
 
 class TSPInstance;
 

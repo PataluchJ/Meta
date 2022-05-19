@@ -1,4 +1,4 @@
-#include "TwoOpt.h"
+#include <TwoOpt.hpp>
 
 Solution TwoOpt::solve(InstancePointer instance)
 {

@@ -1,7 +1,7 @@
 #ifndef META_TSP_KRANDOM_H_
 #define META_TSP_KRANDOM_H_
 
-#include "Solver.h"
+#include <Solver.hpp>
 #include <vector>
 
 class KRandom : public Solver

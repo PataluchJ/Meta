@@ -1,8 +1,8 @@
 #ifndef META_TSP_TWOOPT_H_
 #define META_TSP_TWOOPT_H_
 
-#include "Solver.h"
-#include "Greedy.h"
+#include <Solver.hpp>
+#include <Greedy.hpp>
 
 class TwoOpt : public Solver
 {

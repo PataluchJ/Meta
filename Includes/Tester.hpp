@@ -1,8 +1,8 @@
 #ifndef META_TESTER_H_
 #define META_TESTER_H_
-#include "Solver.h"
-#include "KRandom.h"
-#include "TwoOpt.h"
+#include "Solver.hpp"
+#include "KRandom.hpp"
+#include "TwoOpt.hpp"
 #include <vector>
 #include <algorithm>
 #include <chrono>

@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Sources\Genetic.cpp" />
     <ClCompile Include="Sources\Greedy.cpp" />
     <ClCompile Include="Sources\KRandom.cpp" />
     <ClCompile Include="Sources\Logger.cpp" />
@@ -30,6 +31,7 @@
     <ClCompile Include="Sources\TwoOpt.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Includes\Genetic.h" />
     <ClInclude Include="Includes\Greedy.hpp" />
     <ClInclude Include="Includes\KRandom.hpp" />
     <ClInclude Include="Includes\Logger.hpp" />

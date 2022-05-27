@@ -48,6 +48,9 @@
     <ClCompile Include="Sources\Logger.cpp">
       <Filter>Pliki źródłowe</Filter>
     </ClCompile>
+    <ClCompile Include="Sources\Genetic.cpp">
+      <Filter>Pliki źródłowe\Solvers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Includes\NamedType.hpp">
@@ -79,6 +82,9 @@
     </ClInclude>
     <ClInclude Include="Includes\Logger.hpp">
       <Filter>Pliki nagłówkowe</Filter>
+    </ClInclude>
+    <ClInclude Include="Includes\Genetic.h">
+      <Filter>Pliki nagłówkowe\Solvers</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

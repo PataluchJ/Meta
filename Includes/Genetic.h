@@ -3,10 +3,12 @@
 
 #include <Solver.hpp>
 #include <Logger.hpp>
-#include <functional>
+#include <vector>
 #include <chrono>
+#include <memory>
+
 /*
-* TODO: 
+* TODO:
 * [X] Getting initial population
 * [X] Selection (random, roulet)
 * [~] Crossover (multiple)
@@ -15,110 +17,110 @@
 * [] Mutations
 * [] Params. modyfication by algo.
 * [] Islands population crossover
-* 
+*
 */
-namespace Gen {
 
-	/* Data types */
-	struct Specimen {
-		Solution solution;
-		uint64_t cost;
-	};
+namespace GA {
 
-	using Population = std::vector<Specimen>;
-	using PopulationPointer = std::shared_ptr<Population>;
-	struct Parents {
-		Specimen* a;
-		Specimen* b;
-	};
-	using SelectedParents = std::vector<Parents>;
+    struct Specimen {
+        Solution solution;
+        uint64_t cost;
+    };
 
+    struct Population {
+        std::vector<Specimen> specimens;
+        uint32_t nextGenerationOffset;
+        Specimen& operator[](size_t i) { return specimens[i]; }
+        uint32_t size() { return specimens.size(); }
+    };
 
-	/* Functions for selecting parents pairs */
-	class Mating {
-	public:
-		using Function = std::function<SelectedParents && (PopulationPointer population, uint32_t numberOfPairs)>;
-		//using FunctionGenerator = std::function<Function()>;
-		static Function getRandom();
-		static Function getRoulette();
-	};
-	
-	/* Crossover functions */
-	class Crossover {
-	public:
-		using Function = std::function<void(const Specimen* parentA, const Specimen* parent2B, Specimen* kidA, Specimen* kidB, float mutation)>;
+    struct Pair {
+        Specimen* a, * b;
+    };
 
-		static Function getPMX();
-		static Function getPMXWithLocalOpt(OptymalizerPointer optimizer);
-	private:
-		static void pmxSwap(const Specimen* sourc, Specimen* targ, uint8_t pivot);
-	};
+    /* Base classes for functions */
+    class ParentSelector {
+    public:
+        virtual std::vector<Pair> select(Population& population, uint32_t noPairs) = 0;
+    };
 
-	/* Functions for selection of speciments into next generation
-	*	and calcualtes current costs for surviving population
-	*/
-	class Selection {
-	public: 
-		using Function = std::function<void(PopulationPointer parents, PopulationPointer kids, uint32_t desiredPopulation, float selectionElitism)>;
+    class Crossover {
+    public:
+        virtual void crossover(const Specimen* pa, const Specimen* pb, Specimen* ka, Specimen* kb, float mutation) = 0;
+    };
 
-		static Function getRoulette();
-	private:
-		struct CombinePointers {
-			CombinePointers(PopulationPointer a, PopulationPointer b);
-			Specimen& operator[](size_t index);
-		private:
-			size_t bStart;
-			PopulationPointer a, b;
-		};
-	};
+    class Selection {
+    public:
+        virtual void select(Population& population, uint32_t desiredPopulation, double elitism) = 0;
+    };
 
+    /* Parent selection */
+    class RouletteParentSelector : public ParentSelector {
+    public:
+        std::vector<Pair> select(Population& population, uint32_t noPairs) override;
+    private:
+        uint32_t findOnWheel(std::vector<double>& partialSums, double value);
+    };
 
-	class Genetic : public Solver
-	{
-	public:
+    class RandomParentSelector : public ParentSelector {
+    public:
+        std::vector<Pair> select(Population& population, uint32_t noPairs) override;
+    };
 
-		struct Parameters {
-			/* Population size control*/
-			uint32_t maxPopulation;
-			uint32_t minPopulation;
-			uint32_t desiredPopulation;
-			float elitism;
-			
-			/* Mutation, will increase with stagnation */
-			float minimumMutation;
-			float maximumMutation;
-			float currentMutation;
+    /* Crossovers */
+    void pmxSwap(const Specimen* parent, Specimen* kid, uint32_t pivot);
+    class PMXCrossover : public Crossover {
+    public:
+        void crossover(const Specimen* pa, const Specimen* pb, Specimen* ka, Specimen* kb, float mutation) override;
+    };
 
-			/* Stagnation detection and recovery */
-			uint32_t mutationIncreaseAt;
-			uint32_t mutationMaxAt;
-			uint32_t nukeAt;
+    class PMXLocalOptCrossover : public Crossover {
+    public:
+        PMXLocalOptCrossover(InPlaceOptymalizer optimizer) : optimizer(optimizer) {}
+        void crossover(const Specimen* pa, const Specimen* pb, Specimen* ka, Specimen* kb, float mutation) override;
+    private:
+        InPlaceOptymalizer optimizer;
+    };
 
-			/* Population change functions */
-			Selection::Function selection;
-			Crossover::Function crossover;
-			Mating::Function mate;
+    /* Selection */
+    class RouletteSelector : public Selection {
+    public:
+        void select(Population& population, uint32_t desiredPopulation, double elitism) override;
+    private:
+        uint32_t spinTheWheel(std::vector<double>& wheel)
+    };
 
 
-			Solution initialSolution;
+    /* Genetic MH implementation */
+    class Genetic : public Solver {
+    public:
+        struct Parameters {
+            uint32_t populationSize;
+            double mutation;
+            double elitism;
 
-		};
+            std::unique_ptr<ParentSelector> parentSelector;
+            std::unique_ptr<Crossover> crossover;
+            std::unique_ptr<Selection> selection;
+            std::chrono::duration<std::chrono::milliseconds> timeLimit;
+        };
 
-		struct RunStatistic {
-			std::chrono::high_resolution_clock::time_point start;
-			uint64_t iteration;
-			uint64_t stagnation;
-		};
+        struct RunStatistic {
+            std::chrono::high_resolution_clock::time_point start;
+            uint64_t iteration;
+            uint64_t stagnation;
+        };
 
-		Genetic(Parameters& p) : params(p) {}
-		~Genetic() {}
+        Genetic(Parameters p) : parameters(p) {}
+        ~Genetic() {}
 
-		Solution solve(InstancePointer instance) override;
-		std::string getName() override { return std::string("Genetic"); };
-	private:
-		Parameters params;
+        Solution solve(InstancePointer instance) override;
+        std::string getName() override { return std::string("Genetic"); };
+    private:
+        Parameters parameters;
+        void generateRandomPopulation(InstancePointer instance, Population& population, uint32_t size);
+    };
 
-		void generateRandomPopulation(InstancePointer instance, PopulationPointer population, uint32_t size);
-	};
 }
+
 #endif

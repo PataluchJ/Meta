@@ -31,7 +31,7 @@
     <ClCompile Include="Sources\TwoOpt.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Includes\Genetic.h" />
+    <ClInclude Include="Includes\Genetic.hpp" />
     <ClInclude Include="Includes\Greedy.hpp" />
     <ClInclude Include="Includes\KRandom.hpp" />
     <ClInclude Include="Includes\Logger.hpp" />
@@ -107,6 +107,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir)Includes</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

@@ -83,7 +83,7 @@
     <ClInclude Include="Includes\Logger.hpp">
       <Filter>Pliki nagłówkowe</Filter>
     </ClInclude>
-    <ClInclude Include="Includes\Genetic.h">
+    <ClInclude Include="Includes\Genetic.hpp">
       <Filter>Pliki nagłówkowe\Solvers</Filter>
     </ClInclude>
   </ItemGroup>

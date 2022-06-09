@@ -1,10 +1,10 @@
 #include <Logger.hpp>
 
-#ifdef _DEBUG
+//#ifdef _DEBUG
 uint8_t Logger::flag = 0b111;
-#else
-uint8_t Logger::flag = 0b100;
-#endif
+//#else
+//uint8_t Logger::flag = 0b100;
+//#endif
 
 void Logger::logInfo(const std::string& message, bool endl) {
 	if ((flag & infoFlag) == 0) {

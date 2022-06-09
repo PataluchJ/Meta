@@ -30,8 +30,10 @@ namespace GA {
     struct Population {
         std::vector<Specimen> specimens;
         uint32_t nextGenerationOffset;
+        uint32_t populationSize;
+        uint32_t parentPopulation;
         Specimen& operator[](size_t i) { return specimens[i]; }
-        uint32_t size() { return specimens.size(); }
+        uint32_t size() { return populationSize; }
     };
 
     struct Pair {
@@ -51,7 +53,7 @@ namespace GA {
 
     class Selection {
     public:
-        virtual void select(Population& population, uint32_t desiredPopulation, double elitism) = 0;
+        virtual void select(Population& population, double elitism, bool parentsIncluded) = 0;
     };
 
     /* Parent selection */
@@ -71,38 +73,48 @@ namespace GA {
     void pmxSwap(const Specimen* parent, Specimen* kid, uint32_t pivot);
     class PMXCrossover : public Crossover {
     public:
+        PMXCrossover(InstancePointer ins) : ins(ins) {}
         void crossover(const Specimen* pa, const Specimen* pb, Specimen* ka, Specimen* kb, float mutation) override;
+    private:
+        InstancePointer ins;
     };
 
     class PMXLocalOptCrossover : public Crossover {
     public:
-        PMXLocalOptCrossover(InPlaceOptymalizer optimizer) : optimizer(optimizer) {}
+        PMXLocalOptCrossover(std::shared_ptr<InPlaceOptymalizer> optimizer) : optimizer(optimizer) {}
         void crossover(const Specimen* pa, const Specimen* pb, Specimen* ka, Specimen* kb, float mutation) override;
     private:
-        InPlaceOptymalizer optimizer;
+        std::shared_ptr<InPlaceOptymalizer> optimizer;
     };
 
     /* Selection */
     class RouletteSelector : public Selection {
     public:
-        void select(Population& population, uint32_t desiredPopulation, double elitism) override;
+        void select(Population& population, double elitism, bool includeParents) override;
     private:
-        uint32_t spinTheWheel(std::vector<double>& wheel)
+        uint32_t spinTheWheel(std::vector<double>& wheel, double sum);
     };
 
+    class RandomSelector : public Selection {
+    public:
+        void select(Population& population, double elitims, bool includeParents) override;
+    };
 
     /* Genetic MH implementation */
     class Genetic : public Solver {
     public:
         struct Parameters {
-            uint32_t populationSize;
+            uint32_t parentsPopulation;
+            uint32_t kidsPopulation;
             double mutation;
             double elitism;
+            bool includeParents;
 
-            std::unique_ptr<ParentSelector> parentSelector;
-            std::unique_ptr<Crossover> crossover;
-            std::unique_ptr<Selection> selection;
-            std::chrono::duration<std::chrono::milliseconds> timeLimit;
+            std::shared_ptr<ParentSelector> parentSelector;
+            std::shared_ptr<Crossover> crossover;
+            std::shared_ptr<Selection> selection;
+            uint64_t timeLimit;
+
         };
 
         struct RunStatistic {

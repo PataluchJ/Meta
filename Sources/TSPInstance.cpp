@@ -129,7 +129,7 @@ Solution TSPInstance::loadTourFromFile(const std::string& filepath)
 	return optimalSolution;
 }
 
-uint64_t TSPInstance::calculateGenericSolutionDistance(Solution& solution)
+uint64_t TSPInstance::calculateGenericSolutionDistance(const Solution& solution)
 {
 	uint64_t distance = 0;
 	for (size_t i = 0; i < solution.size()-1; i++) {

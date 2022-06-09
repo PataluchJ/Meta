@@ -23,7 +23,7 @@ public:
 	~TSPInstance();
 
 	DistanceMatrixPointer getDistanceMatrix();
-	uint64_t calculateGenericSolutionDistance(Solution& solution);
+	uint64_t calculateGenericSolutionDistance(const Solution& solution);
 
 	static InstancePointer generateAsymetricInstance(size_t size, unsigned int seed,  uint32_t minimumDistance = 0, uint32_t maximumDistance = 1000);
 	static InstancePointer generateSymtericInstaance(size_t size, unsigned int seed, uint32_t minimumDistance = 0, uint32_t maximumDistance = 1000);

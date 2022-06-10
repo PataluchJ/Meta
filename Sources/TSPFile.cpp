@@ -59,7 +59,7 @@ void TSPFile::parseFile()
 }
 
 void TSPFile::parseDemandSection(){
-	Logger::logNotCriticalError("[TSPFile] DEMAND_SECTION not supported.");
+	//Logger::logNotCriticalError("[TSPFile] DEMAND_SECTION not supported.");
 	/* Format:
 	*	<integer - node number> <integer - demand>
 	*	Skip this section
@@ -70,7 +70,7 @@ void TSPFile::parseDemandSection(){
 	}
 }
 void TSPFile::parseDepotSection() {
-	Logger::logNotCriticalError("[TSPFile] DEPOT_SECTION not supported.");
+	//Logger::logNotCriticalError("[TSPFile] DEPOT_SECTION not supported.");
 	/* Format:
 	*	list terminated with -1
 	*	Skip this section
@@ -81,7 +81,7 @@ void TSPFile::parseDepotSection() {
 	} while (readed != -1);
 }
 void TSPFile::parseDisplayDataSection() {
-	Logger::logNotCriticalError("[TSPFile] DISPLAY_DATA_SECTION not supported.");
+	//Logger::logNotCriticalError("[TSPFile] DISPLAY_DATA_SECTION not supported.");
 	std::string line;
 	for (size_t i = 0; i < dimension; i++)
 		std::getline(file, line);

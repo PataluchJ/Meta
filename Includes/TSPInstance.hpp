@@ -24,6 +24,8 @@ public:
 
 	DistanceMatrixPointer getDistanceMatrix();
 	uint64_t calculateGenericSolutionDistance(const Solution& solution);
+	void setReferenceValue(uint64_t value) { referenceValue = value; }
+	uint64_t getReference() { return referenceValue; }
 
 	static InstancePointer generateAsymetricInstance(size_t size, unsigned int seed,  uint32_t minimumDistance = 0, uint32_t maximumDistance = 1000);
 	static InstancePointer generateSymtericInstaance(size_t size, unsigned int seed, uint32_t minimumDistance = 0, uint32_t maximumDistance = 1000);
@@ -33,6 +35,7 @@ public:
 
 private:
 	DistanceMatrixPointer adjacencyMatrix;
+	uint64_t referenceValue;
 };
 
 

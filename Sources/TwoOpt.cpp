@@ -24,27 +24,3 @@ Solution TwoOpt::solve(InstancePointer instance)
 
 	return bestSolution;
 }
-
-uint64_t TwoOptOptymalizer::optimize(Solution& solution)
-{
-	auto matrix = context->getDistanceMatrix();
-	auto size = matrix->size();
-
-	uint64_t bestSolutionCost = context->calculateGenericSolutionDistance(solution);
-
-	bool improved = true;
-	do {
-		improved = false;
-		Neighborhood n(solution);
-		for (auto& neightboor : n) {
-			auto currentCost = context->calculateGenericSolutionDistance(neightboor);
-			if (currentCost < bestSolutionCost) {
-				solution.swap(neightboor);
-				bestSolutionCost = currentCost;
-				improved = true;
-			}
-		}
-	} while (improved);
-
-	return bestSolutionCost;
-}

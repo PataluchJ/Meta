@@ -91,10 +91,11 @@ void GA::PMXCrossover::crossover(const Specimen* pa, const Specimen* pb, Specime
 	pmxSwap(pb, ka, pivot);
 	
 	if ((double)(rand() % 100) / 100.0 <= mutation) {
-		std::shuffle(ka->solution.begin(), ka->solution.end(), std::default_random_engine(rand()));
+		//std::shuffle(ka->solution.begin(), ka->solution.end(), std::default_random_engine(rand()));
+		mutate(ka);
 	}
 	if ((double)(rand() % 100) / 100.0 <= mutation) {
-		std::shuffle(kb->solution.begin(), kb->solution.end(), std::default_random_engine(rand()));
+		mutate(kb);
 	}
 }
 
@@ -106,30 +107,39 @@ void GA::PMXLocalOptCrossover::crossover(const Specimen* pa, const Specimen* pb,
 	pmxSwap(pa, kb, pivot);
 	pmxSwap(pb, ka, pivot);
 	if ((double)(rand() % 100) / 100.0 <= mutation) 
-		std::shuffle(ka->solution.begin(), ka->solution.end(), std::default_random_engine(rand()));
+		mutate(ka);
 	else
-		optimizer->optimize(ka->solution);
+		optimize(ka->solution);
 	if ((double)(rand() % 100) / 100.0 <= mutation) 
-		std::shuffle(kb->solution.begin(), kb->solution.end(), std::default_random_engine(rand()));
+		mutate(kb);
 	else 
-		optimizer->optimize(kb->solution);
+		optimize(kb->solution);
+}
+
+void GA::PMXLocalOptCrossover::optimize(Solution& solution)
+{
+	uint64_t bestSolutionCost = ins->calculateGenericSolutionDistance(solution);
+	Neighborhood n(solution);
+	bool improved = true;
+	for (int i = 0; i < iters && improved; i++) {
+		for (auto& neightboor : n) {
+			auto currentCost = ins->calculateGenericSolutionDistance(neightboor);
+			if (currentCost < bestSolutionCost) {
+				solution.swap(neightboor);
+				bestSolutionCost = currentCost;
+			}
+		}
+	}
 }
 
 
-void GA::RouletteSelector::select(Population& population, double elitism, bool includeParents)
+void GA::RouletteSelector::select(Population& population, double parentElitism, double kidElitism, bool includeParents)
 {
-	uint32_t size = population.size();
-	if (!includeParents) {
-		for (uint32_t i = 0; i < population.parentPopulation; i++) {
-			population[i].cost = UINT64_MAX;
-		}
-		size -= population.parentPopulation;
-	}
 
-	std::sort(population.specimens.begin(), population.specimens.end(), [](const Specimen& a, const Specimen& b) {
-		return a.cost < b.cost;
-		});
-	uint32_t offset = population.parentPopulation * elitism;
+	Selection::applyElitism(population, parentElitism, kidElitism, includeParents);
+	/* x = elitism*parent_pop / 2
+	Array: [0-x] passed parent [x+1][x+x] passed */
+	uint32_t offset = population.parentPopulation * (parentElitism+kidElitism);
 
 	/* Generate roulette wheel */
 	double minimum = population[0].cost;
@@ -189,7 +199,8 @@ void GA::pmxSwap(const Specimen* parent, Specimen* kid, uint32_t pivot)
 
 Solution GA::Genetic::solve(InstancePointer instance)
 {
-	Logger::logInfo("Start");
+	//Logger::logInfo("Start");
+	parameters.crossover->injectInstance(instance); // Fix this 
 	/* Run Statistic */
 	RunStatistic rs;
 	rs.start = std::chrono::high_resolution_clock::now();
@@ -230,20 +241,20 @@ Solution GA::Genetic::solve(InstancePointer instance)
 			population[i].cost = instance->calculateGenericSolutionDistance(population[i].solution);
 
 		/* Select next gen */
-		parameters.selection->select(population, parameters.elitism, parameters.includeParents);
+		parameters.selection->select(population, parameters.parentElitism, parameters.kidElitism, parameters.includeParents);
 
 		/* Check for new best solution */
 		for (auto& spec : population.specimens) {
 			if (spec.cost < bestSolutionCost) {
-				//double prd = (((double)bestSolutionCost - (double)spec.cost) / (double)bestSolutionCost) * 100;
-				//Logger::logInfo(std::to_string(rs.iteration) + "\t" + std::to_string(bestSolutionCost) + "\t" + std::to_string(prd) + "%");
+				double prd = (double)(spec.cost - instance->getReference()) / (double)(instance->getReference());
+				Logger::logInfo(std::to_string(rs.iteration) + "\t" + std::to_string(bestSolutionCost) + "\t" + std::to_string(prd));
 				bestSolution = spec.solution;
 				bestSolutionCost = spec.cost;
 				rs.stagnation = 0;
 			}
 		}
 	}
-	Logger::logInfo("Finished with " + std::to_string(rs.iteration));
+	//Logger::logInfo("Finished with " + std::to_string(rs.iteration));
 	return bestSolution;
 }
 
@@ -262,23 +273,61 @@ void GA::Genetic::generateRandomPopulation(InstancePointer instance, Population&
 	}
 }
 
-void GA::RandomSelector::select(Population& population, double elitims, bool includeParents)
+void GA::RandomSelector::select(Population& population, double parentElitism, double kidElitism, bool includeParents)
 {
-	uint32_t size = population.size();
-	if (!includeParents) {
-		for (uint32_t i = 0; i < population.parentPopulation; i++)
-			population[i].cost = UINT64_MAX;
-		size -= population.parentPopulation;
-	}
-	std::sort(population.specimens.begin(), population.specimens.end(), [](const Specimen& a, const Specimen& b) {
-		return a.cost < b.cost;
-		});
-	
-	uint32_t i = population.parentPopulation * elitims;
+	uint32_t i = Selection::applyElitism(population, parentElitism, kidElitism, includeParents);
+	uint32_t size = population.specimens.size();
+	while (population[size - 1].cost == UINT64_MAX) size--;
 	for (; i < population.parentPopulation; i++) {
 		std::swap(population[i], population[rand() % (size - i - 1) + (i + 1)]);
 	}
 
 	for (; i < population.size(); i++)
 		population[i].cost = UINT64_MAX;
+}
+
+void GA::Crossover::mutate(Specimen* spec)
+{
+	std::swap(spec->solution[rand() % spec->solution.size()], spec->solution[rand() % spec->solution.size()]);
+}
+
+uint32_t GA::Selection::applyElitism(Population& pop, double parentElitism, double kidElitism, bool parentsIncluded)
+{
+	auto sortStartIterator = pop.specimens.begin();
+	uint32_t offset = 0;
+	if (!parentsIncluded) {
+		auto iterEndForParents = pop.specimens.begin();
+		std::advance(iterEndForParents, pop.nextGenerationOffset);
+
+		if (parentElitism > 0.0) {
+			std::sort(sortStartIterator, iterEndForParents, [](const Specimen& a, const Specimen& b) {return a.cost < b.cost; });
+			std::advance(sortStartIterator, (parentElitism)*pop.parentPopulation);
+			offset += (parentElitism)*pop.parentPopulation;
+		}
+		/* Remove parents */
+		std::for_each(sortStartIterator, iterEndForParents, [](Specimen& a) {a.cost = UINT64_MAX; });
+
+		std::sort(sortStartIterator, pop.specimens.end(), [](const Specimen& a, const Specimen& b) {return a.cost < b.cost; });
+
+		offset += kidElitism * (pop.populationSize - pop.parentPopulation);
+		return offset;
+
+	}
+	double elitism = parentElitism + kidElitism;
+	std::sort(pop.specimens.begin(), pop.specimens.end(), [](const Specimen& a, const Specimen& b) {return a.cost < b.cost; });
+	return pop.populationSize * elitism;
+}
+
+Genetic::Parameters GA::Genetic::Parameters::getStandard()
+{
+	Parameters p;
+	p.parentsPopulation = 50;
+	p.kidsPopulation = 50;
+	p.mutation = 0.05;
+	p.parentElitism = 0.1;
+	p.kidElitism = 0.05;
+	p.includeParents = true;
+	p.timeLimit = 30000;
+
+	return p;
 }

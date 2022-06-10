@@ -13,13 +13,4 @@ protected:
 
 using SolverPointer = std::shared_ptr<Solver>;
 
-class InPlaceOptymalizer {
-public:
-	virtual uint64_t optimize(Solution& solution) = 0;
-private:
-	InstancePointer context;
-};
-
-using OptymalizerPointer = std::shared_ptr<InPlaceOptymalizer>;
-
 #endif

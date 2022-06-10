@@ -16,15 +16,4 @@ private:
 	SolverPointer initialSolver;
 };
 
-class TwoOptOptymalizer : public InPlaceOptymalizer
-{
-public:
-	TwoOptOptymalizer(InstancePointer context) : context(context) {}
-
-	uint64_t optimize(Solution& solution) override;
-
-private:
-	InstancePointer context;
-};
 #endif
-
